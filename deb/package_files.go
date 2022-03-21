@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/utils"
 )
 
 // PackageFile is a single file entry in package

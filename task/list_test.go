@@ -3,7 +3,7 @@ package task
 import (
 	"errors"
 
-	"github.com/aptly-dev/aptly/aptly"
+	"github.com/DataDog/aptly/aptly"
 
 	// need to import as check as otherwise List is redeclared
 	check "gopkg.in/check.v1"

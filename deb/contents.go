@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aptly-dev/aptly/database"
+	"github.com/DataDog/aptly/database"
 	"github.com/pborman/uuid"
 )
 

@@ -6,7 +6,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	leveldbstorage "github.com/syndtr/goleveldb/leveldb/storage"
 
-	"github.com/aptly-dev/aptly/database"
+	"github.com/DataDog/aptly/database"
 )
 
 func internalOpen(path string, throttleCompaction bool) (*leveldb.DB, error) {

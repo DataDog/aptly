@@ -3,7 +3,7 @@ package cmd
 import (
 	"strings"
 
-	"github.com/aptly-dev/aptly/pgp"
+	"github.com/DataDog/aptly/pgp"
 	"github.com/smira/commander"
 	"github.com/smira/flag"
 )

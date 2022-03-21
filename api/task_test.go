@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aptly-dev/aptly/task"
+	"github.com/DataDog/aptly/task"
 
 	. "gopkg.in/check.v1"
 )

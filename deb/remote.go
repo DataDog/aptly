@@ -15,11 +15,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/database"
-	"github.com/aptly-dev/aptly/http"
-	"github.com/aptly-dev/aptly/pgp"
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/database"
+	"github.com/DataDog/aptly/http"
+	"github.com/DataDog/aptly/pgp"
+	"github.com/DataDog/aptly/utils"
 	"github.com/pborman/uuid"
 	"github.com/ugorji/go/codec"
 )

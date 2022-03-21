@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	ctx "github.com/aptly-dev/aptly/context"
+	ctx "github.com/DataDog/aptly/context"
 	"github.com/smira/flag"
 )
 

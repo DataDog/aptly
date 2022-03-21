@@ -3,7 +3,7 @@ package http
 import (
 	"os"
 
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/utils"
 
 	. "gopkg.in/check.v1"
 )

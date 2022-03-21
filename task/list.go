@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/aptly-dev/aptly/aptly"
+	"github.com/DataDog/aptly/aptly"
 )
 
 // List is handling list of processes and makes sure

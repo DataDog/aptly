@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/DataDog/aptly/pgp"
+	"github.com/DataDog/aptly/utils"
 	"github.com/DisposaBoy/JsonConfigReader"
-	"github.com/aptly-dev/aptly/pgp"
-	"github.com/aptly-dev/aptly/utils"
 )
 
 // UploadersRule is single rule of format: what packages can group or key upload

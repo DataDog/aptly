@@ -9,7 +9,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
-	"github.com/aptly-dev/aptly/database"
+	"github.com/DataDog/aptly/database"
 )
 
 type storage struct {

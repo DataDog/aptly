@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/utils"
 )
 
 // Dependency options

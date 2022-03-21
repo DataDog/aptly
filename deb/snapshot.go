@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aptly-dev/aptly/database"
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/database"
+	"github.com/DataDog/aptly/utils"
 	"github.com/pborman/uuid"
 	"github.com/ugorji/go/codec"
 )

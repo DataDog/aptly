@@ -1,4 +1,4 @@
-module github.com/aptly-dev/aptly
+module github.com/DataDog/aptly
 
 go 1.15
 

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/aptly-dev/aptly/files"
-	"github.com/aptly-dev/aptly/http"
+	"github.com/DataDog/aptly/files"
+	"github.com/DataDog/aptly/http"
 
 	. "gopkg.in/check.v1"
 )

@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
-	"github.com/aptly-dev/aptly/files"
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/files"
+	"github.com/DataDog/aptly/utils"
 	. "gopkg.in/check.v1"
 )
 

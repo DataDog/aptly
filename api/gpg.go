@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aptly-dev/aptly/pgp"
+	"github.com/DataDog/aptly/pgp"
 	"github.com/gin-gonic/gin"
 )
 

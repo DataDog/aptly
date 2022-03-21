@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/user"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/console"
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/console"
+	"github.com/DataDog/aptly/utils"
 
 	. "gopkg.in/check.v1"
 )

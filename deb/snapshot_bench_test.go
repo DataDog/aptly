@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aptly-dev/aptly/database/goleveldb"
+	"github.com/DataDog/aptly/database/goleveldb"
 )
 
 func BenchmarkSnapshotCollectionForEach(b *testing.B) {

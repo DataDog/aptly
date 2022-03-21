@@ -3,7 +3,7 @@ package query
 import (
 	"regexp"
 
-	"github.com/aptly-dev/aptly/deb"
+	"github.com/DataDog/aptly/deb"
 
 	. "gopkg.in/check.v1"
 )

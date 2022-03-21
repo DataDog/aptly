@@ -1,7 +1,7 @@
 package deb
 
 import (
-	"github.com/aptly-dev/aptly/pgp"
+	"github.com/DataDog/aptly/pgp"
 	. "gopkg.in/check.v1"
 )
 

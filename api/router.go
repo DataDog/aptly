@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	ctx "github.com/aptly-dev/aptly/context"
+	ctx "github.com/DataDog/aptly/context"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
