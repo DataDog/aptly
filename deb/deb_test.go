@@ -36,24 +36,24 @@ func (s *DebSuite) TestGetControlFileFromDeb(c *C) {
 
 	st, err := GetControlFileFromDeb(s.debFile)
 	c.Check(err, IsNil)
-	c.Check(st["Version"], Equals, "1.49.0.1")
-	c.Check(st["Package"], Equals, "libboost-program-options-dev")
+	c.Check(st.Get("Version"), Equals, "1.49.0.1")
+	c.Check(st.Get("Package"), Equals, "libboost-program-options-dev")
 }
 
 func (s *DebSuite) TestGetControlFileFromDebWithXzControl(c *C) {
 	// Has control.tar.xz archive inside.
 	st, err := GetControlFileFromDeb(s.debFileWithXzControl)
 	c.Check(err, IsNil)
-	c.Check(st["Version"], Equals, "5.9.1+dfsg-2+18.04+bionic+build4")
-	c.Check(st["Package"], Equals, "libqt5concurrent5-dbgsym")
+	c.Check(st.Get("Version"), Equals, "5.9.1+dfsg-2+18.04+bionic+build4")
+	c.Check(st.Get("Package"), Equals, "libqt5concurrent5-dbgsym")
 }
 
 func (s *DebSuite) TestGetControlFileFromDebWithZstdControl(c *C) {
 	// Has control.tar.zstd archive inside.
 	st, err := GetControlFileFromDeb(s.debFileWithZstdControl)
 	c.Check(err, IsNil)
-	c.Check(st["Version"], Equals, "5.15.2+dfsg-12")
-	c.Check(st["Package"], Equals, "libqt5concurrent5-dbgsym")
+	c.Check(st.Get("Version"), Equals, "5.15.2+dfsg-12")
+	c.Check(st.Get("Package"), Equals, "libqt5concurrent5-dbgsym")
 }
 
 func (s *DebSuite) TestGetControlFileFromDsc(c *C) {
@@ -68,13 +68,13 @@ func (s *DebSuite) TestGetControlFileFromDsc(c *C) {
 
 	st, err := GetControlFileFromDsc(s.dscFile, verifier)
 	c.Check(err, IsNil)
-	c.Check(st["Version"], Equals, "0.6.1-1.3")
-	c.Check(st["Source"], Equals, "pyspi")
+	c.Check(st.Get("Version"), Equals, "0.6.1-1.3")
+	c.Check(st.Get("Source"), Equals, "pyspi")
 
 	st, err = GetControlFileFromDsc(s.dscFileNoSign, verifier)
 	c.Check(err, IsNil)
-	c.Check(st["Version"], Equals, "0.6.1-1.4")
-	c.Check(st["Source"], Equals, "pyspi")
+	c.Check(st.Get("Version"), Equals, "0.6.1-1.4")
+	c.Check(st.Get("Source"), Equals, "pyspi")
 }
 
 func (s *DebSuite) TestGetContentsFromDeb(c *C) {

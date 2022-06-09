@@ -271,6 +271,15 @@ func (repo *RemoteRepo) PackageURL(filename string) *url.URL {
 
 // Fetch updates information about repository
 func (repo *RemoteRepo) Fetch(d aptly.Downloader, verifier pgp.Verifier) error {
+	return repo.FetchBuffered(nil, d, verifier)
+}
+
+// FetchBuffered updates information about repository, reading new stanzas into the provided one
+func (repo *RemoteRepo) FetchBuffered(stanza Stanza, d aptly.Downloader, verifier pgp.Verifier) error {
+	if stanza == nil {
+		stanza = make(Stanza, 32)
+	}
+	
 	var (
 		release, inrelease, releasesig *os.File
 		err                            error
@@ -331,13 +340,13 @@ ok:
 	defer release.Close()
 
 	sreader := NewControlFileReader(release, true, false)
-	stanza, err := sreader.ReadStanza()
+	err = sreader.ReadBufferedStanza(stanza)
 	if err != nil {
 		return err
 	}
 
 	if !repo.IsFlat() {
-		architectures := strings.Split(stanza["Architectures"], " ")
+		architectures := strings.Split(stanza.Get("Architectures"), " ")
 		sort.Strings(architectures)
 		// "source" architecture is never present, despite Release file claims
 		architectures = utils.StrSlicesSubstract(architectures, []string{ArchitectureSource})
@@ -351,7 +360,7 @@ ok:
 			}
 		}
 
-		components := strings.Split(stanza["Components"], " ")
+		components := strings.Split(stanza.Get("Components"), " ")
 		if strings.Contains(repo.Distribution, "/") {
 			distributionLast := path.Base(repo.Distribution) + "/"
 			for i := range components {
@@ -372,7 +381,7 @@ ok:
 	repo.ReleaseFiles = make(map[string]utils.ChecksumInfo)
 
 	parseSums := func(field string, setter func(sum *utils.ChecksumInfo, data string)) error {
-		for _, line := range strings.Split(stanza[field], "\n") {
+		for _, line := range strings.Split(stanza.Get(field), "\n") {
 			line = strings.TrimSpace(line)
 			if line == "" {
 				continue
@@ -397,7 +406,7 @@ ok:
 			repo.ReleaseFiles[parts[2]] = sum
 		}
 
-		delete(stanza, field)
+		stanza.Reset(field)
 
 		return nil
 	}
@@ -517,13 +526,15 @@ func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.
 		}
 
 		sreader := NewControlFileReader(packagesReader, false, isInstaller)
+		stanza := make(Stanza, 32)
 
 		for {
-			stanza, err := sreader.ReadStanza()
+			stanza.Clear()
+			err = sreader.ReadBufferedStanza(stanza)
 			if err != nil {
 				return err
 			}
-			if stanza == nil {
+			if stanza.Empty() {
 				break
 			}
 

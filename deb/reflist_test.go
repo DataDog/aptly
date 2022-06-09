@@ -27,19 +27,19 @@ func toStrSlice(reflist *PackageRefList) (result []string) {
 func (s *PackageRefListSuite) SetUpTest(c *C) {
 	s.list = NewPackageList()
 
-	s.p1 = NewPackageFromControlFile(packageStanza.Copy())
-	s.p2 = NewPackageFromControlFile(packageStanza.Copy())
-	stanza := packageStanza.Copy()
-	stanza["Package"] = "mars-invaders"
+	s.p1 = NewPackageFromControlFile(packageStanza())
+	s.p2 = NewPackageFromControlFile(packageStanza())
+	stanza := packageStanza()
+	stanza.Set("Package", "mars-invaders")
 	s.p3 = NewPackageFromControlFile(stanza)
-	stanza = packageStanza.Copy()
-	stanza["Source"] = "unknown-planet"
+	stanza = packageStanza()
+	stanza.Set("Source", "unknown-planet")
 	s.p4 = NewPackageFromControlFile(stanza)
-	stanza = packageStanza.Copy()
-	stanza["Package"] = "lonely-strangers"
+	stanza = packageStanza()
+	stanza.Set("Package", "lonely-strangers")
 	s.p5 = NewPackageFromControlFile(stanza)
-	stanza = packageStanza.Copy()
-	stanza["Version"] = "99.1"
+	stanza = packageStanza()
+	stanza.Set("Version", "99.1")
 	s.p6 = NewPackageFromControlFile(stanza)
 }
 

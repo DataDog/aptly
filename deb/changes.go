@@ -100,14 +100,12 @@ func (c *Changes) VerifyAndParse(acceptUnsigned, ignoreSignature bool, verifier 
 	if err != nil {
 		return err
 	}
-
-	c.Distribution = c.Stanza["Distribution"]
-	c.Changes = c.Stanza["Changes"]
-	c.Source = c.Stanza["Source"]
-	c.Binary = strings.Fields(c.Stanza["Binary"])
-	c.Architectures = strings.Fields(c.Stanza["Architecture"])
-
-	c.Files, err = c.Files.ParseSumFields(c.Stanza)
+	c.Distribution = c.Stanza.Get("Distribution")
+	c.Changes = c.Stanza.Get("Changes")
+	c.Source = c.Stanza.Get("Source")
+	c.Binary = strings.Fields(c.Stanza.Get("Binary"))
+	c.Architectures = strings.Fields(c.Stanza.Get("Architecture"))
+ 	c.Files, err = c.Files.ParseSumFields(c.Stanza)
 	return err
 }
 
@@ -217,7 +215,7 @@ func (c *Changes) PackageQuery() PackageQuery {
 
 // GetField implements PackageLike interface
 func (c *Changes) GetField(field string) string {
-	return c.Stanza[field]
+	return c.Stanza.Get(field)
 }
 
 // MatchesDependency implements PackageLike interface

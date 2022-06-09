@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"sort"
 )
 
 // StringsIsSubset checks that subset is strict subset of full, and returns
@@ -62,18 +61,6 @@ func StrSliceHasItem(s []string, item string) bool {
 		}
 	}
 	return false
-}
-
-// StrMapSortedKeys returns keys of map[string]string sorted
-func StrMapSortedKeys(m map[string]string) []string {
-	keys := make([]string, len(m))
-	i := 0
-	for k := range m {
-		keys[i] = k
-		i++
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 // StrSliceDeduplicate removes dups in slice

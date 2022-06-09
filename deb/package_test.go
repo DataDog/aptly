@@ -20,7 +20,7 @@ type PackageSuite struct {
 var _ = Suite(&PackageSuite{})
 
 func (s *PackageSuite) SetUpTest(c *C) {
-	s.stanza = packageStanza.Copy()
+	s.stanza = packageStanza()
 
 	buf := bytes.NewBufferString(sourcePackageMeta)
 	s.sourceStanza, _ = NewControlFileReader(buf, false, false).ReadStanza()
@@ -117,14 +117,14 @@ func (s *PackageSuite) TestNewSourceFromPara(c *C) {
 }
 
 func (s *PackageSuite) TestWithProvides(c *C) {
-	s.stanza["Provides"] = "arena"
+	s.stanza.Set("Provides", "arena")
 	p := NewPackageFromControlFile(s.stanza)
 
 	c.Check(p.Name, Equals, "alien-arena-common")
 	c.Check(p.Provides, DeepEquals, []string{"arena"})
 
 	st := p.Stanza()
-	c.Check(st["Provides"], Equals, "arena")
+	c.Check(st.Get("Provides"), Equals, "arena")
 }
 
 func (s *PackageSuite) TestKey(c *C) {
@@ -150,7 +150,7 @@ func (s *PackageSuite) TestStanza(c *C) {
 	stanza := p.Stanza()
 
 	for k := range s.stanza {
-		c.Check(stanza[k], Equals, s.stanza[k])
+		c.Check(stanza.Get(k), Equals, s.stanza.Get(k))
 	}
 
 	c.Assert(stanza, DeepEquals, s.stanza)
@@ -171,11 +171,11 @@ func (s *PackageSuite) TestGetField(c *C) {
 
 	stanza2 := s.stanza.Copy()
 	delete(stanza2, "Source")
-	stanza2["Provides"] = "app, game"
+	stanza2.Set("Provides", "app, game")
 	p2 := NewPackageFromControlFile(stanza2)
 
 	stanza3 := s.stanza.Copy()
-	stanza3["Source"] = "alien-arena (3.5)"
+	stanza3.Set("Source", "alien-arena (3.5)")
 	p3 := NewPackageFromControlFile(stanza3)
 
 	p4, _ := NewSourcePackageFromControlFile(s.sourceStanza.Copy())
@@ -228,13 +228,13 @@ func (s *PackageSuite) TestGetField(c *C) {
 func (s *PackageSuite) TestEquals(c *C) {
 	p := NewPackageFromControlFile(s.stanza)
 
-	p2 := NewPackageFromControlFile(packageStanza.Copy())
+	p2 := NewPackageFromControlFile(packageStanza())
 	c.Check(p.Equals(p2), Equals, true)
 
 	p2.deps.Depends = []string{"package1"}
 	c.Check(p.Equals(p2), Equals, true) // strange, but Equals doesn't check deep
 
-	p2 = NewPackageFromControlFile(packageStanza.Copy())
+	p2 = NewPackageFromControlFile(packageStanza())
 	files := p2.Files()
 	files[0].Checksums.MD5 = "abcdefabcdef"
 	p2.UpdateFiles(files)
@@ -262,8 +262,8 @@ func (s *PackageSuite) TestMatchesArchitecture(c *C) {
 	c.Check(p.MatchesArchitecture("i386"), Equals, true)
 	c.Check(p.MatchesArchitecture("amd64"), Equals, false)
 
-	s.stanza = packageStanza.Copy()
-	s.stanza["Architecture"] = "all"
+	s.stanza = packageStanza()
+	s.stanza.Set("Architecture", "all")
 	p = NewPackageFromControlFile(s.stanza)
 	c.Check(p.MatchesArchitecture("i386"), Equals, true)
 	c.Check(p.MatchesArchitecture("amd64"), Equals, true)
@@ -361,25 +361,25 @@ func (s *PackageSuite) TestPoolDirectory(c *C) {
 	c.Check(err, IsNil)
 	c.Check(dir, Equals, "a/alien-arena")
 
-	p = NewPackageFromControlFile(packageStanza.Copy())
+	p = NewPackageFromControlFile(packageStanza())
 	p.Source = ""
 	dir, err = p.PoolDirectory()
 	c.Check(err, IsNil)
 	c.Check(dir, Equals, "a/alien-arena-common")
 
-	p = NewPackageFromControlFile(packageStanza.Copy())
+	p = NewPackageFromControlFile(packageStanza())
 	p.Source = "libarena"
 	dir, err = p.PoolDirectory()
 	c.Check(err, IsNil)
 	c.Check(dir, Equals, "liba/libarena")
 
-	p = NewPackageFromControlFile(packageStanza.Copy())
+	p = NewPackageFromControlFile(packageStanza())
 	p.Source = "gcc-defaults (1.77)"
 	dir, err = p.PoolDirectory()
 	c.Check(err, IsNil)
 	c.Check(dir, Equals, "g/gcc-defaults")
 
-	p = NewPackageFromControlFile(packageStanza.Copy())
+	p = NewPackageFromControlFile(packageStanza())
 	p.Source = "l"
 	_, err = p.PoolDirectory()
 	c.Check(err, ErrorMatches, ".* too short")
@@ -404,7 +404,7 @@ func (s *PackageSuite) TestLinkFromPool(c *C) {
 	p.IsSource = true
 	err = p.LinkFromPool(publishedStorage, packagePool, "", "pool/non-free/a/alien-arena", false)
 	c.Check(err, IsNil)
-	c.Check(p.Extra()["Directory"], Equals, "pool/non-free/a/alien-arena")
+	c.Check(p.Extra().Get("Directory"), Equals, "pool/non-free/a/alien-arena")
 }
 
 func (s *PackageSuite) TestFilepathList(c *C) {
@@ -462,7 +462,15 @@ func (s *PackageSuite) TestVerifyFiles(c *C) {
 	c.Check(result, Equals, true)
 }
 
-var packageStanza = Stanza{"Source": "alien-arena", "Pre-Depends": "dpkg (>= 1.6)", "Suggests": "alien-arena-mars", "Recommends": "aliean-arena-luna", "Depends": "libc6 (>= 2.7), alien-arena-data (>= 7.40)", "Filename": "pool/contrib/a/alien-arena/alien-arena-common_7.40-2_i386.deb", "SHA1": "46955e48cad27410a83740a21d766ce362364024", "SHA256": "eb4afb9885cba6dc70cccd05b910b2dbccc02c5900578be5e99f0d3dbf9d76a5", "Priority": "extra", "Maintainer": "Debian Games Team <pkg-games-devel@lists.alioth.debian.org>", "Description": "Common files for Alien Arena client and server ALIEN ARENA is a standalone 3D first person online deathmatch shooter\n crafted from the original source code of Quake II and Quake III, released\n by id Software under the GPL license. With features including 32 bit\n graphics, new particle engine and effects, light blooms, reflective water,\n hi resolution textures and skins, hi poly models, stain maps, ALIEN ARENA\n pushes the envelope of graphical beauty rivaling today's top games.\n .\n This package installs the common files for Alien Arena.\n", "Homepage": "http://red.planetarena.org", "Tag": "role::app-data, role::shared-lib, special::auto-inst-parts", "Installed-Size": "456", "Version": "7.40-2", "Replaces": "alien-arena (<< 7.33-1)", "Size": "187518", "MD5sum": "1e8cba92c41420aa7baa8a5718d67122", "Package": "alien-arena-common", "Section": "contrib/games", "Architecture": "i386"}
+var packageStanzaData = map[string]string{"Source": "alien-arena", "Pre-Depends": "dpkg (>= 1.6)", "Suggests": "alien-arena-mars", "Recommends": "aliean-arena-luna", "Depends": "libc6 (>= 2.7), alien-arena-data (>= 7.40)", "Filename": "pool/contrib/a/alien-arena/alien-arena-common_7.40-2_i386.deb", "SHA1": "46955e48cad27410a83740a21d766ce362364024", "SHA256": "eb4afb9885cba6dc70cccd05b910b2dbccc02c5900578be5e99f0d3dbf9d76a5", "Priority": "extra", "Maintainer": "Debian Games Team <pkg-games-devel@lists.alioth.debian.org>", "Description": "Common files for Alien Arena client and server ALIEN ARENA is a standalone 3D first person online deathmatch shooter\n crafted from the original source code of Quake II and Quake III, released\n by id Software under the GPL license. With features including 32 bit\n graphics, new particle engine and effects, light blooms, reflective water,\n hi resolution textures and skins, hi poly models, stain maps, ALIEN ARENA\n pushes the envelope of graphical beauty rivaling today's top games.\n .\n This package installs the common files for Alien Arena.\n", "Homepage": "http://red.planetarena.org", "Tag": "role::app-data, role::shared-lib, special::auto-inst-parts", "Installed-Size": "456", "Version": "7.40-2", "Replaces": "alien-arena (<< 7.33-1)", "Size": "187518", "MD5sum": "1e8cba92c41420aa7baa8a5718d67122", "Package": "alien-arena-common", "Section": "contrib/games", "Architecture": "i386"}
+
+func packageStanza() Stanza {
+	packageStanza := Stanza{}
+	for k, v := range packageStanzaData {
+		packageStanza.Set(k, v)
+	}
+	return packageStanza
+}
 
 const sourcePackageMeta = `Package: access-modifier-checker
 Binary: libaccess-modifier-checker-java, libaccess-modifier-checker-java-doc

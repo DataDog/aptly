@@ -48,7 +48,7 @@ func NewSnapshotFromRepository(name string, repo *RemoteRepo) (*Snapshot, error)
 	if repo.packageRefs == nil {
 		return nil, errors.New("mirror not updated")
 	}
-
+	
 	return &Snapshot{
 		UUID:                 uuid.New(),
 		Name:                 name,
@@ -56,9 +56,9 @@ func NewSnapshotFromRepository(name string, repo *RemoteRepo) (*Snapshot, error)
 		SourceKind:           SourceRemoteRepo,
 		SourceIDs:            []string{repo.UUID},
 		Description:          fmt.Sprintf("Snapshot from mirror %s", repo),
-		Origin:               repo.Meta["Origin"],
-		NotAutomatic:         repo.Meta["NotAutomatic"],
-		ButAutomaticUpgrades: repo.Meta["ButAutomaticUpgrades"],
+		Origin:               repo.Meta.Get("Origin"),
+		NotAutomatic:         repo.Meta.Get("NotAutomatic"),
+		ButAutomaticUpgrades: repo.Meta.Get("ButAutomaticUpgrades"),
 		packageRefs:          repo.packageRefs,
 	}, nil
 }

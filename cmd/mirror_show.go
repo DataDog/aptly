@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/DataDog/aptly/deb"
-	"github.com/DataDog/aptly/utils"
 	"github.com/smira/commander"
 	"github.com/smira/flag"
 )
@@ -77,8 +76,8 @@ func aptlyMirrorShowTxt(cmd *commander.Command, args []string) error {
 	}
 
 	fmt.Printf("\nInformation from release file:\n")
-	for _, k := range utils.StrMapSortedKeys(repo.Meta) {
-		fmt.Printf("%s: %s\n", k, repo.Meta[k])
+	for _, k := range repo.Meta.SortedKeys() {
+		fmt.Printf("%s: %s\n", k, repo.Meta.Get(k))
 	}
 
 	withPackages := context.Flags().Lookup("with-packages").Value.Get().(bool)

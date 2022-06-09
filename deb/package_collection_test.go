@@ -17,7 +17,7 @@ type PackageCollectionSuite struct {
 var _ = Suite(&PackageCollectionSuite{})
 
 func (s *PackageCollectionSuite) SetUpTest(c *C) {
-	s.p = NewPackageFromControlFile(packageStanza.Copy())
+	s.p = NewPackageFromControlFile(packageStanza())
 	s.db, _ = goleveldb.NewOpenDB(c.MkDir())
 	s.collection = NewPackageCollection(s.db)
 }
@@ -35,7 +35,7 @@ func (s *PackageCollectionSuite) TestUpdate(c *C) {
 	c.Assert(res.Equals(s.p), Equals, true)
 
 	// same package, ok
-	p2 := NewPackageFromControlFile(packageStanza.Copy())
+	p2 := NewPackageFromControlFile(packageStanza())
 	err = s.collection.Update(p2)
 	c.Assert(err, IsNil)
 	res, err = s.collection.ByKey(p2.Key(""))
@@ -61,7 +61,7 @@ func (s *PackageCollectionSuite) TestByKey(c *C) {
 	c.Assert(p2.Equals(s.p), Equals, true)
 
 	c.Check(p2.GetDependencies(0), DeepEquals, []string{"libc6 (>= 2.7)", "alien-arena-data (>= 7.40)", "dpkg (>= 1.6)"})
-	c.Check(p2.Extra()["Priority"], Equals, "extra")
+	c.Check(p2.Extra().Get("Priority"), Equals, "extra")
 	c.Check(p2.Files()[0].Filename, Equals, "alien-arena-common_7.40-2_i386.deb")
 }
 
@@ -86,7 +86,7 @@ func (s *PackageCollectionSuite) TestByKeyOld0_3(c *C) {
 		"libgcc1 (>= 1:4.1.1)", "libgdk-pixbuf2.0-0 (>= 2.22.0)", "libglib2.0-0 (>= 2.24.0)", "libgtk2.0-0 (>= 2.24.0)",
 		"libicu48 (>= 4.8-1)", "libpango1.0-0 (>= 1.14.0)", "libssl1.0.0 (>= 1.0.0)", "libstdc++6 (>= 4.6)", "libx11-6",
 		"libxml2 (>= 2.7.4)", "rdesktop"})
-	c.Check(p.Extra()["Priority"], Equals, "optional")
+	c.Check(p.Extra().Get("Priority"), Equals, "optional")
 }
 
 func (s *PackageCollectionSuite) TestAllPackageRefs(c *C) {
