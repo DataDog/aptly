@@ -58,24 +58,30 @@ func (s *UploadersSuite) TestIsAllowed(c *C) {
 	}
 
 	// no keys - not allowed
-	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{}, Stanza: Stanza{"Source": "calamares"}}), ErrorMatches, "denied as no rule matches")
+	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{}, Stanza: createSingleValueStanza("Source", "calamares")}), ErrorMatches, "denied as no rule matches")
 
 	// no rule - not allowed
-	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"37E1C17570096AD1", "EC4B033C70096AD1"}, Stanza: Stanza{"Source": "unknown-calamares"}}), ErrorMatches, "denied as no rule matches")
+	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"37E1C17570096AD1", "EC4B033C70096AD1"}, Stanza: createSingleValueStanza("Source", "unknown-calamares")}), ErrorMatches, "denied as no rule matches")
 
 	// first rule: allow anyone do stuff with calamares
-	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"ABCD1234", "1234ABCD"}, Stanza: Stanza{"Source": "calamares"}}), IsNil)
+	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"ABCD1234", "1234ABCD"}, Stanza: createSingleValueStanza("Source", "calamares")}), IsNil)
 
 	// second rule: nobody is allowed to do stuff with never-calamares
-	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"ABCD1234", "1234ABCD"}, Stanza: Stanza{"Source": "never-calamares"}}),
+	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"ABCD1234", "1234ABCD"}, Stanza: createSingleValueStanza("Source", "never-calamares")}),
 		ErrorMatches, "denied according to rule: {\"condition\":\"\",\"allow\":null,\"deny\":\\[\"\\*\"\\]}")
 
 	// third rule: anyone from the group or explicit key
-	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"45678901", "12345678"}, Stanza: Stanza{"Source": "some-calamares"}}), IsNil)
-	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"37E1C17570096AD1"}, Stanza: Stanza{"Source": "some-calamares"}}), IsNil)
-	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"70096AD1"}, Stanza: Stanza{"Source": "some-calamares"}}), IsNil)
+	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"45678901", "12345678"}, Stanza: createSingleValueStanza("Source", "some-calamares")}), IsNil)
+	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"37E1C17570096AD1"}, Stanza: createSingleValueStanza("Source", "some-calamares")}), IsNil)
+	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"70096AD1"}, Stanza: createSingleValueStanza("Source", "some-calamares")}), IsNil)
 
 	// fourth rule: some are not allowed
-	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"ABCD1234", "45678901"}, Stanza: Stanza{"Source": "some-calamares"}}),
+	c.Check(u.IsAllowed(&Changes{SignatureKeys: []pgp.Key{"ABCD1234", "45678901"}, Stanza: createSingleValueStanza("Source", "some-calamares")}),
 		ErrorMatches, "denied according to rule: {\"condition\":\"\",\"allow\":null,\"deny\":\\[\"45678901\",\"12345678\"\\]}")
+}
+
+func createSingleValueStanza(key, value string) Stanza {
+	result := Stanza{}
+	result.Set(key, value)
+	return result
 }

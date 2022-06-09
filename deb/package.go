@@ -67,45 +67,45 @@ var (
 // NewPackageFromControlFile creates Package from parsed Debian control file
 func NewPackageFromControlFile(input Stanza) *Package {
 	result := &Package{
-		Name:         input["Package"],
-		Version:      input["Version"],
-		Architecture: input["Architecture"],
-		Source:       input["Source"],
+		Name:         input.Get("Package"),
+		Version:      input.Get("Version"),
+		Architecture: input.Get("Architecture"),
+		Source:       input.Get("Source"),
 		V06Plus:      true,
 	}
 
-	delete(input, "Package")
-	delete(input, "Version")
-	delete(input, "Architecture")
-	delete(input, "Source")
+	input.Get("Package")
+	input.Get("Version")
+	input.Get("Architecture")
+	input.Get("Source")
 
-	filesize, _ := strconv.ParseInt(input["Size"], 10, 64)
+	filesize, _ := strconv.ParseInt(input.Get("Size"), 10, 64)
 
-	md5, ok := input["MD5sum"]
-	if !ok {
+	md5 := input.Get("MD5sum")
+	if md5 == "" {
 		// there are some broken repos out there with MD5 in wrong field
-		md5 = input["MD5Sum"]
+		md5 = input.Get("MD5Sum")
 	}
 
 	result.UpdateFiles(PackageFiles{PackageFile{
-		Filename:     filepath.Base(input["Filename"]),
-		downloadPath: filepath.Dir(input["Filename"]),
+		Filename:     filepath.Base(input.Get("Filename")),
+		downloadPath: filepath.Dir(input.Get("Filename")),
 		Checksums: utils.ChecksumInfo{
 			Size:   filesize,
 			MD5:    strings.TrimSpace(md5),
-			SHA1:   strings.TrimSpace(input["SHA1"]),
-			SHA256: strings.TrimSpace(input["SHA256"]),
-			SHA512: strings.TrimSpace(input["SHA512"]),
+			SHA1:   strings.TrimSpace(input.Get("SHA1")),
+			SHA256: strings.TrimSpace(input.Get("SHA256")),
+			SHA512: strings.TrimSpace(input.Get("SHA512")),
 		},
 	}})
 
-	delete(input, "Filename")
-	delete(input, "MD5sum")
-	delete(input, "MD5Sum")
-	delete(input, "SHA1")
-	delete(input, "SHA256")
-	delete(input, "SHA512")
-	delete(input, "Size")
+	input.Reset("Filename")
+	input.Reset("MD5sum")
+	input.Reset("MD5Sum")
+	input.Reset("SHA1")
+	input.Reset("SHA256")
+	input.Reset("SHA512")
+	input.Reset("Size")
 
 	depends := &PackageDependencies{}
 	depends.Depends = parseDependencies(input, "Depends")
@@ -125,16 +125,16 @@ func NewPackageFromControlFile(input Stanza) *Package {
 func NewSourcePackageFromControlFile(input Stanza) (*Package, error) {
 	result := &Package{
 		IsSource:           true,
-		Name:               input["Package"],
-		Version:            input["Version"],
+		Name:               input.Get("Package"),
+		Version:            input.Get("Version"),
 		Architecture:       "source",
-		SourceArchitecture: input["Architecture"],
+		SourceArchitecture: input.Get("Architecture"),
 		V06Plus:            true,
 	}
 
-	delete(input, "Package")
-	delete(input, "Version")
-	delete(input, "Architecture")
+	input.Reset("Package")
+	input.Reset("Version")
+	input.Reset("Architecture")
 
 	var err error
 
@@ -144,12 +144,12 @@ func NewSourcePackageFromControlFile(input Stanza) (*Package, error) {
 		return nil, err
 	}
 
-	delete(input, "Files")
-	delete(input, "Checksums-Sha1")
-	delete(input, "Checksums-Sha256")
+	input.Reset("Files")
+	input.Reset("Checksums-Sha1")
+	input.Reset("Checksums-Sha256")
 
 	for i := range files {
-		files[i].downloadPath = input["Directory"]
+		files[i].downloadPath = input.Get("Directory")
 	}
 
 	result.UpdateFiles(files)
@@ -184,7 +184,7 @@ func NewInstallerPackageFromControlFile(input Stanza, repo *RemoteRepo, componen
 	}
 
 	files := make(PackageFiles, 0)
-	files, err := files.ParseSumField(input[""], func(sum *utils.ChecksumInfo, data string) { sum.SHA256 = data }, false, false)
+	files, err := files.ParseSumField(input.Get(""), func(sum *utils.ChecksumInfo, data string) { sum.SHA256 = data }, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -229,9 +229,9 @@ func (p *Package) String() string {
 // ExtendedStanza returns package stanza enhanced with aptly-specific fields
 func (p *Package) ExtendedStanza() Stanza {
 	stanza := p.Stanza()
-	stanza["FilesHash"] = fmt.Sprintf("%08x", p.FilesHash)
-	stanza["Key"] = string(p.Key(""))
-	stanza["ShortKey"] = string(p.ShortKey(""))
+	stanza.Set("FilesHash", fmt.Sprintf("%08x", p.FilesHash))
+	stanza.Set("Key", string(p.Key("")))
+	stanza.Set("ShortKey", string(p.ShortKey("")))
 
 	return stanza
 }
@@ -303,7 +303,7 @@ func (p *Package) GetField(name string) string {
 	case "Build-Depends-Indep":
 		return strings.Join(p.Deps().BuildDependsInDep, ", ")
 	default:
-		return p.Extra()[name]
+		return p.Extra().Get(name)
 	}
 }
 
@@ -414,7 +414,7 @@ func (p *Package) GetDependencies(options int) (dependencies []string) {
 
 // QualifiedName returns [$SECTION/]$NAME
 func (p *Package) QualifiedName() string {
-	section := p.Extra()["Section"]
+	section := p.Extra().Get("Section")
 	if section != "" {
 		return section + "/" + p.Name
 	}
@@ -512,16 +512,16 @@ func (p *Package) UpdateFiles(files PackageFiles) {
 
 // Stanza creates original stanza from package
 func (p *Package) Stanza() (result Stanza) {
-	result = p.Extra().Copy()
-	result["Package"] = p.Name
-	result["Version"] = p.Version
+	result = p.Extra()
+	result.Set("Package", p.Name)
+	result.Set("Version", p.Version)
 
 	if p.IsSource {
-		result["Architecture"] = p.SourceArchitecture
+		result.Set("Architecture", p.SourceArchitecture)
 	} else {
-		result["Architecture"] = p.Architecture
+		result.Set("Architecture", p.Architecture)
 		if p.Source != "" {
-			result["Source"] = p.Source
+			result.Set("Source", p.Source)
 		}
 	}
 
@@ -543,62 +543,62 @@ func (p *Package) Stanza() (result Stanza) {
 			}
 		}
 
-		result["Files"] = strings.Join(md5, "")
+		result.Set("Files", strings.Join(md5, ""))
 		if len(sha1) > 0 {
-			result["Checksums-Sha1"] = strings.Join(sha1, "")
+			result.Set("Checksums-Sha1", strings.Join(sha1, ""))
 		}
 		if len(sha256) > 0 {
-			result["Checksums-Sha256"] = strings.Join(sha256, "")
+			result.Set("Checksums-Sha256", strings.Join(sha256, ""))
 		}
 		if len(sha512) > 0 {
-			result["Checksums-Sha512"] = strings.Join(sha512, "")
+			result.Set("Checksums-Sha512", strings.Join(sha512, ""))
 		}
 	} else if p.IsInstaller {
 		sha256 := []string{}
 		for _, f := range p.Files() {
 			sha256 = append(sha256, fmt.Sprintf("%s  %s", f.Checksums.SHA256, f.Filename))
 		}
-		result[""] = strings.Join(sha256, "\n")
+		result.Set("", strings.Join(sha256, "\n"))
 	} else {
 		f := p.Files()[0]
-		result["Filename"] = f.DownloadURL()
+		result.Set("Filename", f.DownloadURL())
 		if f.Checksums.MD5 != "" {
-			result["MD5sum"] = f.Checksums.MD5
+			result.Set("MD5sum", f.Checksums.MD5)
 		}
 		if f.Checksums.SHA1 != "" {
-			result["SHA1"] = f.Checksums.SHA1
+			result.Set("SHA1", f.Checksums.SHA1)
 		}
 		if f.Checksums.SHA256 != "" {
-			result["SHA256"] = f.Checksums.SHA256
+			result.Set("SHA256", f.Checksums.SHA256)
 		}
 		if f.Checksums.SHA512 != "" {
-			result["SHA512"] = f.Checksums.SHA512
+			result.Set("SHA512", f.Checksums.SHA512)
 		}
-		result["Size"] = fmt.Sprintf("%d", f.Checksums.Size)
+		result.Set("Size", fmt.Sprintf("%d", f.Checksums.Size))
 	}
 
 	deps := p.Deps()
 
 	if deps.Depends != nil {
-		result["Depends"] = strings.Join(deps.Depends, ", ")
+		result.Set("Depends", strings.Join(deps.Depends, ", "))
 	}
 	if deps.PreDepends != nil {
-		result["Pre-Depends"] = strings.Join(deps.PreDepends, ", ")
+		result.Set("Pre-Depends", strings.Join(deps.PreDepends, ", "))
 	}
 	if deps.Suggests != nil {
-		result["Suggests"] = strings.Join(deps.Suggests, ", ")
+		result.Set("Suggests", strings.Join(deps.Suggests, ", "))
 	}
 	if deps.Recommends != nil {
-		result["Recommends"] = strings.Join(deps.Recommends, ", ")
+		result.Set("Recommends", strings.Join(deps.Recommends, ", "))
 	}
 	if p.Provides != nil {
-		result["Provides"] = strings.Join(p.Provides, ", ")
+		result.Set("Provides", strings.Join(p.Provides, ", "))
 	}
 	if deps.BuildDepends != nil {
-		result["Build-Depends"] = strings.Join(deps.BuildDepends, ", ")
+		result.Set("Build-Depends", strings.Join(deps.BuildDepends, ", "))
 	}
 	if deps.BuildDependsInDep != nil {
-		result["Build-Depends-Indep"] = strings.Join(deps.BuildDependsInDep, ", ")
+		result.Set("Build-Depends-Indep", strings.Join(deps.BuildDependsInDep, ", "))
 	}
 
 	return
@@ -629,7 +629,7 @@ func (p *Package) LinkFromPool(publishedStorage aptly.PublishedStorage, packageP
 		}
 
 		if p.IsSource {
-			p.Extra()["Directory"] = relPath
+			p.Extra().Set("Directory", relPath)
 		} else {
 			p.Files()[i].downloadPath = relPath
 		}

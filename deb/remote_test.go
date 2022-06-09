@@ -59,12 +59,12 @@ type PackageListMixinSuite struct {
 func (s *PackageListMixinSuite) SetUpPackages() {
 	s.list = NewPackageList()
 
-	s.p1 = NewPackageFromControlFile(packageStanza.Copy())
-	stanza := packageStanza.Copy()
-	stanza["Package"] = "mars-invaders"
+	s.p1 = NewPackageFromControlFile(packageStanza())
+	stanza := packageStanza()
+	stanza.Set("Package", "mars-invaders")
 	s.p2 = NewPackageFromControlFile(stanza)
-	stanza = packageStanza.Copy()
-	stanza["Package"] = "lonely-strangers"
+	stanza = packageStanza()
+	stanza.Set("Package", "lonely-strangers")
 	s.p3 = NewPackageFromControlFile(stanza)
 
 	s.list.Add(s.p1)

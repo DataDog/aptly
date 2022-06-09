@@ -15,12 +15,12 @@ type PackageDependencies struct {
 }
 
 func parseDependencies(input Stanza, key string) []string {
-	value, ok := input[key]
-	if !ok {
+	value := input.Get(key)
+	if value == "" {
 		return nil
 	}
 
-	delete(input, key)
+	input.Reset(key)
 
 	value = strings.TrimSpace(value)
 	if value == "" {

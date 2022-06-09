@@ -46,7 +46,7 @@ type oldPackage struct {
 	Suggests           []string
 	Recommends         []string
 	Files              []PackageFile
-	Extra              Stanza
+	Extra              map[string]string
 }
 
 // ByKey find package in DB by its key
@@ -84,7 +84,12 @@ func (collection *PackageCollection) ByKey(key []byte) (*Package, error) {
 			Recommends:        oldp.Recommends,
 		}
 
-		p.extra = &oldp.Extra
+		extra := Stanza{}
+		for k, v := range oldp.Extra {
+			extra.Set(k, v)
+		}
+
+		p.extra = &extra
 		for i := range oldp.Files {
 			oldp.Files[i].Filename = filepath.Base(oldp.Files[i].Filename)
 		}
@@ -108,22 +113,26 @@ func (collection *PackageCollection) ByKey(key []byte) (*Package, error) {
 	return p, nil
 }
 
-// loadExtra loads Stanza with all the xtra information about the package
+// loadExtra loads Stanza with all the extra information about the package
 func (collection *PackageCollection) loadExtra(p *Package) *Stanza {
 	encoded, err := collection.db.Get(p.Key("xE"))
 	if err != nil {
 		panic("unable to load extra")
 	}
 
-	stanza := &Stanza{}
+	data := &map[string]string{}
 
 	decoder := codec.NewDecoderBytes(encoded, collection.codecHandle)
-	err = decoder.Decode(stanza)
+	err = decoder.Decode(data)
 	if err != nil {
 		panic("unable to decode extra")
 	}
 
-	return stanza
+	stanza := Stanza{}
+	for k, v := range *data {
+		stanza.Set(k, v)
+	}
+	return &stanza
 }
 
 // loadDependencies loads dependencies for the package
@@ -264,8 +273,13 @@ func (collection *PackageCollection) UpdateInTransaction(p *Package, transaction
 	}
 
 	if p.extra != nil {
+		data := map[string]string{}
+		for k, v := range *p.extra {
+			data[k] = v.String()
+		}
+
 		encodeBuffer.Reset()
-		err = encoder.Encode(*p.extra)
+		err = encoder.Encode(data)
 		if err != nil {
 			return err
 		}

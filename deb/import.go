@@ -93,7 +93,7 @@ func ImportPackageFiles(list *PackageList, packageFiles []string, forceReplace b
 			stanza, err = GetControlFileFromDsc(file, verifier)
 
 			if err == nil {
-				stanza["Package"] = stanza["Source"]
+				stanza.Set("Package", stanza.Get("Source"))
 				delete(stanza, "Source")
 
 				p, err = NewSourcePackageFromControlFile(stanza)

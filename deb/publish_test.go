@@ -319,9 +319,9 @@ func (s *PublishedRepoSuite) TestPublish(c *C) {
 	st, err := cfr.ReadStanza()
 	c.Assert(err, IsNil)
 
-	c.Check(st["Origin"], Equals, "ppa squeeze")
-	c.Check(st["Components"], Equals, "main")
-	c.Check(st["Architectures"], Equals, "i386")
+	c.Check(st.Get("Origin"), Equals, "ppa squeeze")
+	c.Check(st.Get("Components"), Equals, "main")
+	c.Check(st.Get("Architectures"), Equals, "i386")
 
 	pf, err := os.Open(filepath.Join(s.publishedStorage.PublicPath(), "ppa/dists/squeeze/main/binary-i386/Packages"))
 	c.Assert(err, IsNil)
@@ -332,7 +332,7 @@ func (s *PublishedRepoSuite) TestPublish(c *C) {
 		st, err = cfr.ReadStanza()
 		c.Assert(err, IsNil)
 
-		c.Check(st["Filename"], Equals, "pool/main/a/alien-arena/alien-arena-common_7.40-2_i386.deb")
+		c.Check(st.Get("Filename"), Equals, "pool/main/a/alien-arena/alien-arena-common_7.40-2_i386.deb")
 	}
 
 	st, err = cfr.ReadStanza()
@@ -346,8 +346,8 @@ func (s *PublishedRepoSuite) TestPublish(c *C) {
 	st, err = cfr.ReadStanza()
 	c.Assert(err, IsNil)
 
-	c.Check(st["Archive"], Equals, "squeeze")
-	c.Check(st["Architecture"], Equals, "i386")
+	c.Check(st.Get("Archive"), Equals, "squeeze")
+	c.Check(st.Get("Architecture"), Equals, "i386")
 
 	_, err = os.Stat(filepath.Join(s.publishedStorage.PublicPath(), "ppa/pool/main/a/alien-arena/alien-arena-common_7.40-2_i386.deb"))
 	c.Assert(err, IsNil)

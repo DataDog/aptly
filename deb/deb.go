@@ -144,7 +144,6 @@ func GetControlFileFromDsc(dscFile string, verifier pgp.Verifier) (Stanza, error
 	}
 
 	return stanza, nil
-
 }
 
 // GetContentsFromDeb returns list of files installed by .deb package

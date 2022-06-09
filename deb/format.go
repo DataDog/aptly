@@ -2,15 +2,14 @@ package deb
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"sort"
 	"strings"
 	"unicode"
+	"unsafe"
 )
-
-// Stanza or paragraph of Debian control file
-type Stanza map[string]string
 
 // MaxFieldSize is maximum stanza field size in bytes
 const MaxFieldSize = 2 * 1024 * 1024
@@ -94,13 +93,71 @@ var (
 	}
 )
 
-// Copy returns copy of Stanza
-func (s Stanza) Copy() (result Stanza) {
-	result = make(Stanza, len(s))
-	for k, v := range s {
-		result[k] = v
+// Stanza or paragraph of Debian control file
+type Stanza map[string]*strings.Builder
+
+func (s Stanza) Get(key string) string {
+	if s[key] == nil {
+		return ""
 	}
-	return
+	return s[key].String()
+}
+
+func (s Stanza) Set(key, value string) {
+	if s[key] == nil {
+		s[key] = &strings.Builder{}
+		s[key].WriteString(value)
+		return
+	}
+	s[key].Reset()
+	s[key].WriteString(value)
+}
+
+func (s Stanza) Reset(key string) {
+	if s[key] == nil {
+		return
+	}
+	s[key].Reset()
+}
+
+func (s Stanza) Empty() bool {
+	for _, val := range s {
+		if val != nil && val.Len() > 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *Stanza) Clear() {
+	for _, val := range *s {
+		if val != nil {
+			val.Reset()
+		}
+	}
+}
+
+func (s Stanza) Copy() Stanza {
+	out := make(Stanza)
+
+	for k, val := range s {
+		if val != nil {
+			out[k] = &strings.Builder{}
+			out[k].WriteString(val.String())
+		}
+	}
+	return out
+}
+
+func (s Stanza) SortedKeys() []string {
+	keys := make([]string, len(s))
+	i := 0
+	for k := range s {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func isMultilineField(field string, isRelease bool) bool {
@@ -124,11 +181,11 @@ func isMultilineField(field string, isRelease bool) bool {
 		return true
 	case "MD5Sum":
 		return isRelease
-	case "SHA1":
+	case "SHA1": // nolint: goconst
 		return isRelease
-	case "SHA256":
+	case "SHA256": // nolint: goconst
 		return isRelease
-	case "SHA512":
+	case "SHA512": // nolint: goconst
 		return isRelease
 	}
 	return false
@@ -176,7 +233,7 @@ func (s Stanza) WriteTo(w *bufio.Writer, isSource, isRelease, isInstaller bool) 
 		value, ok := s[field]
 		if ok {
 			delete(s, field)
-			err := writeField(w, field, value, isRelease)
+			err := writeField(w, field, value.String(), isRelease)
 			if err != nil {
 				return err
 			}
@@ -194,7 +251,7 @@ func (s Stanza) WriteTo(w *bufio.Writer, isSource, isRelease, isInstaller bool) 
 		}
 		sort.Strings(keys)
 		for _, field := range keys {
-			err := writeField(w, field, s[field], isRelease)
+			err := writeField(w, field, s.Get(field), isRelease)
 			if err != nil {
 				return err
 			}
@@ -207,13 +264,37 @@ func (s Stanza) WriteTo(w *bufio.Writer, isSource, isRelease, isInstaller bool) 
 // Parsing errors
 var (
 	ErrMalformedStanza = errors.New("malformed stanza syntax")
+	ErrInvalidArgument = errors.New("invalid argument")
 )
 
+// canonicalCase converts the input to canonical case and returns this value as a new string
 func canonicalCase(field string) string {
+	// If the field is already in canonical form, we can
+	// simply return a string literal version of it
+	for _, val := range canonicalOrderRelease {
+		if field == val {
+			return val
+		}
+	}
+	for _, val := range canonicalOrderBinary {
+		if field == val {
+			return val
+		}
+	}
+	for _, val := range canonicalOrderSource {
+		if field == val {
+			return val
+		}
+	}
+
 	upper := strings.ToUpper(field)
 	switch upper {
-	case "SHA1", "SHA256", "SHA512":
-		return upper
+	case "SHA1":
+		return "SHA1"
+	case "SHA256":
+		return "SHA256"
+	case "SHA512":
+		return "SHA512"
 	case "MD5SUM":
 		return "MD5Sum"
 	case "NOTAUTOMATIC":
@@ -223,8 +304,7 @@ func canonicalCase(field string) string {
 	}
 
 	startOfWord := true
-
-	return strings.Map(func(r rune) rune {
+	mappedString := strings.Map(func(r rune) rune {
 		if startOfWord {
 			startOfWord = false
 			return unicode.ToUpper(r)
@@ -236,6 +316,15 @@ func canonicalCase(field string) string {
 
 		return unicode.ToLower(r)
 	}, field)
+
+	if mappedString == field {
+		// If strings.Map does not need to modify the input, it simply returns the
+		// input.
+		// In order to guarantee that canonicalCase always returns a new string, we
+		// need to perform a deep copy of mappedString prior to returning it
+		return string([]byte(mappedString[:]))
+	}
+	return mappedString
 }
 
 // ControlFileReader implements reading of control files stanza by stanza
@@ -257,51 +346,84 @@ func NewControlFileReader(r io.Reader, isRelease, isInstaller bool) *ControlFile
 	}
 }
 
-// ReadStanza reeads one stanza from control file
+// ReadStanza reads one stanza from control file
 func (c *ControlFileReader) ReadStanza() (Stanza, error) {
-	stanza := make(Stanza, 32)
+	buf := make(Stanza, 32)
+	err := c.ReadBufferedStanza(buf)
+	if err != nil {
+		return nil, err
+	}
+	if !buf.Empty() {
+		return buf, nil
+	}
+	return nil, nil
+}
+
+// ReadBufferedStanza reads one stanza from control file into the provided stanza
+func (c *ControlFileReader) ReadBufferedStanza(stanza Stanza) error {
+	if stanza == nil {
+		return ErrInvalidArgument
+	}
+
 	lastField := ""
 	lastFieldMultiline := c.isInstaller
 
 	for c.scanner.Scan() {
-		line := c.scanner.Text()
+		lineBytes := c.scanner.Bytes()
 
 		// Current stanza ends with empty line
-		if line == "" {
-			if len(stanza) > 0 {
-				return stanza, nil
+		if len(lineBytes) == 0 {
+			if !stanza.Empty() {
+				return nil
 			}
 			continue
 		}
 
-		if line[0] == ' ' || line[0] == '\t' || c.isInstaller {
+		if lineBytes[0] == ' ' || lineBytes[0] == '\t' || c.isInstaller {
+			if stanza[lastField] == nil {
+				stanza[lastField] = &strings.Builder{}
+			}
+
+			stanza[lastField].Grow(len(lineBytes) + 1)
 			if lastFieldMultiline {
-				stanza[lastField] += line + "\n"
+				stanza[lastField].Write(lineBytes)
+				stanza[lastField].WriteByte('\n')
 			} else {
-				stanza[lastField] += " " + strings.TrimSpace(line)
+				stanza[lastField].WriteByte(' ')
+				stanza[lastField].Write(bytes.TrimSpace(lineBytes))
 			}
 		} else {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) != 2 {
-				return nil, ErrMalformedStanza
+			lineStr := *(*string)(unsafe.Pointer(&lineBytes))
+			splitIndex := strings.IndexByte(lineStr, ':')
+			if splitIndex == -1 {
+				stanza = nil
+				return ErrMalformedStanza
 			}
-			lastField = canonicalCase(parts[0])
+
+			// It's safe to pass a pointer to the lastField's underlying byte array
+			// to canonicalCase because canonicalCase is guaranteed to return a new string
+			lastFieldBytes := lineBytes[:splitIndex]
+			lastField = canonicalCase(*(*string)(unsafe.Pointer(&lastFieldBytes)))
 			lastFieldMultiline = isMultilineField(lastField, c.isRelease)
+
+			if stanza[lastField] == nil {
+				stanza[lastField] = &strings.Builder{}
+			}
+
+			lastFieldValue := lineBytes[splitIndex+1:]
 			if lastFieldMultiline {
-				stanza[lastField] = parts[1]
-				if parts[1] != "" {
-					stanza[lastField] += "\n"
+				stanza[lastField].Reset()
+				stanza[lastField].Grow(len(lastFieldValue) + 1)
+				stanza[lastField].Write(lastFieldValue)
+				if len(lastFieldValue) > 0 {
+					stanza[lastField].WriteByte('\n')
 				}
 			} else {
-				stanza[lastField] = strings.TrimSpace(parts[1])
+				stanza[lastField].Reset()
+				stanza[lastField].Grow(len(lastFieldValue))
+				stanza[lastField].Write(bytes.TrimSpace(lastFieldValue))
 			}
 		}
 	}
-	if err := c.scanner.Err(); err != nil {
-		return nil, err
-	}
-	if len(stanza) > 0 {
-		return stanza, nil
-	}
-	return nil, nil
+	return c.scanner.Err()
 }

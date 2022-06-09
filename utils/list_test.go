@@ -43,11 +43,6 @@ func (s *ListSuite) TestStrSliceHasIteml(c *C) {
 	c.Check(StrSliceHasItem([]string{"a", "b"}, "c"), Equals, false)
 }
 
-func (s *ListSuite) TestStrMapSortedKeys(c *C) {
-	c.Check(StrMapSortedKeys(map[string]string{}), DeepEquals, []string{})
-	c.Check(StrMapSortedKeys(map[string]string{"x": "1", "a": "3", "y": "4"}), DeepEquals, []string{"a", "x", "y"})
-}
-
 func (s *ListSuite) TestStrSliceDeduplicate(c *C) {
 	c.Check(StrSliceDeduplicate([]string{}), DeepEquals, []string{})
 	c.Check(StrSliceDeduplicate([]string{"a"}), DeepEquals, []string{"a"})

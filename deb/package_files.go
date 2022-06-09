@@ -141,22 +141,22 @@ func (files PackageFiles) ParseSumField(input string, setter func(sum *utils.Che
 func (files PackageFiles) ParseSumFields(stanza Stanza) (PackageFiles, error) {
 	var err error
 
-	files, err = files.ParseSumField(stanza["Files"], func(sum *utils.ChecksumInfo, data string) { sum.MD5 = data }, true, true)
+	files, err = files.ParseSumField(stanza.Get("Files"), func(sum *utils.ChecksumInfo, data string) { sum.MD5 = data }, true, true)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err = files.ParseSumField(stanza["Checksums-Sha1"], func(sum *utils.ChecksumInfo, data string) { sum.SHA1 = data }, true, true)
+	files, err = files.ParseSumField(stanza.Get("Checksums-Sha1"), func(sum *utils.ChecksumInfo, data string) { sum.SHA1 = data }, true, true)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err = files.ParseSumField(stanza["Checksums-Sha256"], func(sum *utils.ChecksumInfo, data string) { sum.SHA256 = data }, true, true)
+	files, err = files.ParseSumField(stanza.Get("Checksums-Sha256"), func(sum *utils.ChecksumInfo, data string) { sum.SHA256 = data }, true, true)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err = files.ParseSumField(stanza["Checksums-Sha512"], func(sum *utils.ChecksumInfo, data string) { sum.SHA512 = data }, true, true)
+	files, err = files.ParseSumField(stanza.Get("Checksums-Sha512"), func(sum *utils.ChecksumInfo, data string) { sum.SHA512 = data }, true, true)
 	if err != nil {
 		return nil, err
 	}
