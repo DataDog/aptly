@@ -42,8 +42,8 @@ endif
 
 system-test: install system/env
 ifeq ($(RUN_LONG_TESTS), yes)
-	if [ ! -e ~/aptly-fixture-db ]; then git clone https://github.com/DataDog/aptly-fixture-db.git ~/aptly-fixture-db/; fi
-	if [ ! -e ~/aptly-fixture-pool ]; then git clone https://github.com/DataDog/aptly-fixture-pool.git ~/aptly-fixture-pool/; fi
+	if [ ! -e ~/aptly-fixture-db ]; then git clone https://github.com/aptly-dev//aptly-fixture-db.git ~/aptly-fixture-db/; fi
+	if [ ! -e ~/aptly-fixture-pool ]; then git clone https://github.com/aptly-dev//aptly-fixture-pool.git ~/aptly-fixture-pool/; fi
 	PATH=$(BINPATH)/:$(PATH) && . system/env/bin/activate && APTLY_VERSION=$(VERSION) $(PYTHON) system/run.py --long $(TESTS)
 endif
 
