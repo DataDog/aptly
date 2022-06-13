@@ -151,7 +151,7 @@ func (s Stanza) Copy() Stanza {
 
 func (s Stanza) Export() map[string]string {
 	ret := make(map[string]string)
-	
+
 	for k, val := range s {
 		if val != nil && val.Len() > 0 {
 			ret[k] = val.String()
