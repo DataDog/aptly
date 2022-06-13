@@ -181,11 +181,11 @@ func isMultilineField(field string, isRelease bool) bool {
 		return true
 	case "MD5Sum":
 		return isRelease
-	case "SHA1":
+	case "SHA1": // nolint: goconst
 		return isRelease
-	case "SHA256":
+	case "SHA256": // nolint: goconst
 		return isRelease
-	case "SHA512":
+	case "SHA512": // nolint: goconst
 		return isRelease
 	}
 	return false
