@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/aptly-dev/aptly/aptly"
+	"github.com/DataDog/aptly/aptly"
 )
 
 // Output represents a safe standard output of task

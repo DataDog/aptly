@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aptly-dev/aptly/deb"
+	"github.com/DataDog/aptly/deb"
 	"github.com/smira/commander"
 )
 

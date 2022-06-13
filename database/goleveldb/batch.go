@@ -4,7 +4,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
-	"github.com/aptly-dev/aptly/database"
+	"github.com/DataDog/aptly/database"
 )
 
 type batch struct {

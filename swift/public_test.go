@@ -12,8 +12,8 @@ import (
 
 	"github.com/ncw/swift/swifttest"
 
-	"github.com/aptly-dev/aptly/files"
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/files"
+	"github.com/DataDog/aptly/utils"
 )
 
 type PublishedStorageSuite struct {

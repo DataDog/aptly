@@ -7,7 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/aptly-dev/aptly/deb"
+	"github.com/DataDog/aptly/deb"
 )
 
 type parser struct {

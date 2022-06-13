@@ -2,7 +2,7 @@
 package query
 
 import (
-	"github.com/aptly-dev/aptly/deb"
+	"github.com/DataDog/aptly/deb"
 )
 
 /*

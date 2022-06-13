@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/aptly-dev/aptly/deb"
+	"github.com/DataDog/aptly/deb"
 	"github.com/smira/commander"
 	"github.com/smira/flag"
 )

@@ -2,8 +2,8 @@
 aptly
 =====
 
-.. image:: https://github.com/aptly-dev/aptly/actions/workflows/ci.yml/badge.svg
-    :target: https://github.com/aptly-dev/aptly/actions
+.. image:: https://github.com/DataDog/aptly/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/DataDog/aptly/actions
 
 .. image:: https://codecov.io/gh/aptly-dev/aptly/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/aptly-dev/aptly
@@ -11,7 +11,7 @@ aptly
 .. image:: https://badges.gitter.im/Join Chat.svg
     :target: https://gitter.im/aptly-dev/aptly?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
-.. image:: https://goreportcard.com/badge/github.com/aptly-dev/aptly
+.. image:: https://goreportcard.com/badge/github.com/DataDog/aptly
     :target: https://goreportcard.com/report/aptly-dev/aptly
 
 Aptly is a swiss army knife for Debian repository management.
@@ -62,11 +62,11 @@ If you would like to use nightly builds (unstable), please use following reposit
 
     deb http://repo.aptly.info/ nightly main
 
-Binary executables (depends almost only on libc) are available for download from `GitHub Releases <https://github.com/aptly-dev/aptly/releases>`_.
+Binary executables (depends almost only on libc) are available for download from `GitHub Releases <https://github.com/DataDog/aptly/releases>`_.
 
 If you have Go environment set up, you can build aptly from source by running (go 1.14+ required)::
 
-    git clone https://github.com/aptly-dev/aptly
+    git clone https://github.com/DataDog/aptly
     cd aptly
     make modules install
 

@@ -14,8 +14,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/utils"
 	"github.com/mxk/go-flowrate/flowrate"
 	"github.com/pkg/errors"
 	"github.com/smira/go-ftp-protocol/protocol"

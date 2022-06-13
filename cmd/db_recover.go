@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/smira/commander"
 
-	"github.com/aptly-dev/aptly/database/goleveldb"
+	"github.com/DataDog/aptly/database/goleveldb"
 )
 
 // aptly db recover

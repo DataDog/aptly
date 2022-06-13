@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/database"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/database"
 	"github.com/ugorji/go/codec"
 )
 

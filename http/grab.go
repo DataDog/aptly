@@ -13,11 +13,11 @@ import (
 
 	"golang.org/x/time/rate"
 
-	"github.com/aptly-dev/aptly/utils"
+	"github.com/DataDog/aptly/utils"
 	"github.com/cavaliergopher/grab/v3"
 	"github.com/pkg/errors"
 
-	"github.com/aptly-dev/aptly/aptly"
+	"github.com/DataDog/aptly/aptly"
 )
 
 type GrabDownloader struct {

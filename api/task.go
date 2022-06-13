@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/task"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/task"
 	"github.com/gin-gonic/gin"
 )
 

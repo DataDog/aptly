@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	ctx "github.com/aptly-dev/aptly/context"
+	ctx "github.com/DataDog/aptly/context"
 	"github.com/smira/commander"
 )
 

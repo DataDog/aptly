@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/deb"
-	"github.com/aptly-dev/aptly/query"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/deb"
+	"github.com/DataDog/aptly/query"
 	"github.com/smira/commander"
 	"github.com/smira/flag"
 )

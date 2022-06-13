@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/aptly-dev/aptly/deb"
-	"github.com/aptly-dev/aptly/query"
+	"github.com/DataDog/aptly/deb"
+	"github.com/DataDog/aptly/query"
 	"github.com/smira/commander"
 	"github.com/smira/flag"
 )

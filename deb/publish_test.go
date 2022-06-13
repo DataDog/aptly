@@ -8,10 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/database"
-	"github.com/aptly-dev/aptly/database/goleveldb"
-	"github.com/aptly-dev/aptly/files"
+	"github.com/DataDog/aptly/aptly"
+	"github.com/DataDog/aptly/database"
+	"github.com/DataDog/aptly/database/goleveldb"
+	"github.com/DataDog/aptly/files"
 	"github.com/ugorji/go/codec"
 
 	. "gopkg.in/check.v1"

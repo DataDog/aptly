@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/aptly-dev/aptly/pgp"
+	"github.com/DataDog/aptly/pgp"
 
 	. "gopkg.in/check.v1"
 )

@@ -3,7 +3,7 @@ package goleveldb
 import (
 	"bytes"
 
-	"github.com/aptly-dev/aptly/database"
+	"github.com/DataDog/aptly/database"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 

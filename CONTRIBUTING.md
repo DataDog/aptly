@@ -15,24 +15,24 @@ Please report unacceptable behavior to [team@aptly.info](mailto:team@aptly.info)
 
 ### List of Repositories
 
-* [aptly-dev/aptly](https://github.com/aptly-dev/aptly) - aptly source code, functional tests, man page
-* [apty-dev/aptly-dev.github.io](https://github.com/aptly-dev/aptly-dev.github.io) - aptly website (https://www.aptly.info/)
-* [aptly-dev/aptly-fixture-db](https://github.com/aptly-dev/aptly-fixture-db) & [aptly-dev/aptly-fixture-pool](https://github.com/aptly-dev/aptly-fixture-pool) provide
+* [aptly-dev/aptly](https://github.com/DataDog/aptly) - aptly source code, functional tests, man page
+* [apty-dev/aptly-dev.github.io](https://github.com/DataDog/aptly-dev.github.io) - aptly website (https://www.aptly.info/)
+* [aptly-dev/aptly-fixture-db](https://github.com/DataDog/aptly-fixture-db) & [aptly-dev/aptly-fixture-pool](https://github.com/DataDog/aptly-fixture-pool) provide
   fixtures for aptly functional tests
 
 ## How Can I Contribute?
 
 ### Reporting Bugs
 
-1. Please search for similar bug report in [issue tracker](https://github.com/aptly-dev/aptly/issues)
+1. Please search for similar bug report in [issue tracker](https://github.com/DataDog/aptly/issues)
 2. Please verify that bug is not fixed in latest aptly nightly ([download information](https://www.aptly.info/download/))
 3. Steps to reproduce increases chances for bug to be fixed quickly. If possible, submit PR with new functional test which fails.
 4. If bug is reproducible with specific package, please provide link to package file.
-5. Open issue at [GitHub](https://github.com/aptly-dev/aptly/issues)
+5. Open issue at [GitHub](https://github.com/DataDog/aptly/issues)
 
 ### Suggesting Enhancements
 
-1. Please search [issue tracker](https://github.com/aptly-dev/aptly/issues) for similar feature requests.
+1. Please search [issue tracker](https://github.com/DataDog/aptly/issues) for similar feature requests.
 2. Describe why enhancement is important to you.
 3. Include any additional details or implementation details.
 
@@ -45,13 +45,13 @@ There are two kinds of documentation:
 
 Core content is mostly the same, but website contains more information, tutorials, examples.
 
-If you want to update `man` page, please open PR to [main aptly repo](https://github.com/aptly-dev/aptly),
+If you want to update `man` page, please open PR to [main aptly repo](https://github.com/DataDog/aptly),
 details in [man page](#man-page) section.
 
 If you want to update website, please follow steps below:
 
 1. Install [hugo](http://gohugo.io/)
-2. Fork [website source](https://github.com/aptly-dev/aptly-dev.github.io) and clone it
+2. Fork [website source](https://github.com/DataDog/aptly-dev.github.io) and clone it
 3. Launch hugo in development mode: `hugo -w server`
 4. Navigate to `http://localhost:1313/`: you should see aptly website
 5. Update documentation, most of the time editing Markdown is all you need.

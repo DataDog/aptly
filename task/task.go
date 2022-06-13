@@ -3,7 +3,7 @@ package task
 import (
 	"sync/atomic"
 
-	"github.com/aptly-dev/aptly/aptly"
+	"github.com/DataDog/aptly/aptly"
 )
 
 // State task is in
