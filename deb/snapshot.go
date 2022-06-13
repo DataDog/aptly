@@ -56,9 +56,9 @@ func NewSnapshotFromRepository(name string, repo *RemoteRepo) (*Snapshot, error)
 		SourceKind:           SourceRemoteRepo,
 		SourceIDs:            []string{repo.UUID},
 		Description:          fmt.Sprintf("Snapshot from mirror %s", repo),
-		Origin:               repo.Meta.Get("Origin"),
-		NotAutomatic:         repo.Meta.Get("NotAutomatic"),
-		ButAutomaticUpgrades: repo.Meta.Get("ButAutomaticUpgrades"),
+		Origin:               repo.Meta["Origin"],
+		NotAutomatic:         repo.Meta["NotAutomatic"],
+		ButAutomaticUpgrades: repo.Meta["ButAutomaticUpgrades"],
 		packageRefs:          repo.packageRefs,
 	}, nil
 }

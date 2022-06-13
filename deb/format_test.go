@@ -184,10 +184,3 @@ func (s *ControlFileSuite) BenchmarkReadStanza(c *C) {
 		}
 	}
 }
-
-func (s *ControlFileSuite) TestStanzaSortedKeys(c *C) {
-	emptyStanza := Stanza{}
-	stanza := Stanza{"x": nil, "a": nil, "y": nil}
-	c.Check(emptyStanza.SortedKeys(), DeepEquals, []string{})
-	c.Check(stanza.SortedKeys(), DeepEquals, []string{"a", "x", "y"})
-}

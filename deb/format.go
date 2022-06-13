@@ -149,15 +149,16 @@ func (s Stanza) Copy() Stanza {
 	return out
 }
 
-func (s Stanza) SortedKeys() []string {
-	keys := make([]string, len(s))
-	i := 0
-	for k := range s {
-		keys[i] = k
-		i++
+func (s Stanza) Export() map[string]string {
+	ret := make(map[string]string)
+	
+	for k, val := range s {
+		if val != nil && val.Len() > 0 {
+			ret[k] = val.String()
+		}
 	}
-	sort.Strings(keys)
-	return keys
+
+	return ret
 }
 
 func isMultilineField(field string, isRelease bool) bool {

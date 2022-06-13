@@ -47,7 +47,7 @@ type RemoteRepo struct {
 	// List of architectures to fetch, if empty, then fetch all architectures
 	Architectures []string
 	// Meta-information about repository
-	Meta Stanza
+	Meta map[string]string
 	// Last update date
 	LastDownloadDate time.Time
 	// Checksums for release files
@@ -431,7 +431,7 @@ ok:
 		return err
 	}
 
-	repo.Meta = stanza
+	repo.Meta = stanza.Export()
 
 	return nil
 }
@@ -709,7 +709,7 @@ func (repo *RemoteRepo) Decode(input []byte) error {
 				Components       []string
 				Architectures    []string
 				DownloadSources  bool
-				Meta             Stanza
+				Meta             map[string]string
 				LastDownloadDate []byte
 				ReleaseFiles     map[string]utils.ChecksumInfo
 				Filter           string
