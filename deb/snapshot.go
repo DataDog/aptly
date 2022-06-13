@@ -48,7 +48,7 @@ func NewSnapshotFromRepository(name string, repo *RemoteRepo) (*Snapshot, error)
 	if repo.packageRefs == nil {
 		return nil, errors.New("mirror not updated")
 	}
-	
+
 	return &Snapshot{
 		UUID:                 uuid.New(),
 		Name:                 name,

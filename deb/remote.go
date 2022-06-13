@@ -279,7 +279,7 @@ func (repo *RemoteRepo) FetchBuffered(stanza Stanza, d aptly.Downloader, verifie
 	if stanza == nil {
 		stanza = make(Stanza, 32)
 	}
-	
+
 	var (
 		release, inrelease, releasesig *os.File
 		err                            error

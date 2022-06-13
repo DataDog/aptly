@@ -113,7 +113,7 @@ func (s *ControlFileSuite) TestReadWriteStanza(c *C) {
 
 	buf := &bytes.Buffer{}
 	w := bufio.NewWriter(buf)
-	
+
 	err = stanza.Copy().WriteTo(w, true, false, false)
 	c.Assert(err, IsNil)
 	err = w.Flush()
@@ -134,7 +134,7 @@ func (s *ControlFileSuite) TestReadWriteInstallerStanza(c *C) {
 	r := NewControlFileReader(s.reader, false, true)
 	stanza, err := r.ReadStanza()
 	c.Assert(err, IsNil)
-	
+
 	buf := &bytes.Buffer{}
 	w := bufio.NewWriter(buf)
 	err = stanza.Copy().WriteTo(w, false, false, true)

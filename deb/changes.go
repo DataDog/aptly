@@ -105,7 +105,7 @@ func (c *Changes) VerifyAndParse(acceptUnsigned, ignoreSignature bool, verifier 
 	c.Source = c.Stanza.Get("Source")
 	c.Binary = strings.Fields(c.Stanza.Get("Binary"))
 	c.Architectures = strings.Fields(c.Stanza.Get("Architecture"))
- 	c.Files, err = c.Files.ParseSumFields(c.Stanza)
+	c.Files, err = c.Files.ParseSumFields(c.Stanza)
 	return err
 }
 
