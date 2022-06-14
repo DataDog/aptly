@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"os"
 	"strings"
+	"encoding/json"
 
 	. "gopkg.in/check.v1"
 )
@@ -170,6 +171,28 @@ func (s *ControlFileSuite) TestLongFields(c *C) {
 	stanza, e := r.ReadStanza()
 	c.Assert(e, IsNil)
 	c.Assert(len(stanza.Get("Provides")), Equals, 586929)
+}
+
+func (s *ControlFileSuite) TestNewStanza(c *C) {
+	stanza := NewStanza(packageStanzaData)
+	c.Assert(len(stanza), Equals, len(packageStanzaData))
+
+	exported := stanza.Export()
+	c.Assert(packageStanzaData, DeepEquals, exported)
+}
+
+func (s *ControlFileSuite) TestStanzaMarshal(c *C) {
+	stanza1 := NewStanza(packageStanzaData)
+	buf, err1 := json.Marshal(&stanza1)
+	c.Assert(err1, IsNil)
+
+	var data map[string]string
+    err2 := json.Unmarshal(buf, &data)
+	c.Assert(err2, IsNil)
+
+	stanza2 := NewStanza(data)
+
+	c.Assert(stanza1, DeepEquals, stanza2)
 }
 
 func (s *ControlFileSuite) BenchmarkReadStanza(c *C) {

@@ -116,7 +116,8 @@ func NewPackageFromControlFile(input Stanza) *Package {
 
 	result.Provides = parseDependencies(input, "Provides")
 
-	result.extra = &input
+	extra := input.Copy()
+	result.extra = &extra
 
 	return result
 }
@@ -159,7 +160,8 @@ func NewSourcePackageFromControlFile(input Stanza) (*Package, error) {
 	depends.BuildDependsInDep = parseDependencies(input, "Build-Depends-Indep")
 	result.deps = depends
 
-	result.extra = &input
+	extra := input.Copy()
+	result.extra = &extra
 
 	return result, nil
 }
@@ -238,7 +240,8 @@ func (p *Package) ExtendedStanza() Stanza {
 
 // MarshalJSON implements json.Marshaller interface
 func (p *Package) MarshalJSON() ([]byte, error) {
-	return json.Marshal(p.ExtendedStanza())
+	stanza := p.ExtendedStanza()
+	return stanza.MarshalJSON()
 }
 
 // GetField returns fields from package
@@ -601,7 +604,7 @@ func (p *Package) Stanza() (result Stanza) {
 		result.Set("Build-Depends-Indep", strings.Join(deps.BuildDependsInDep, ", "))
 	}
 
-	return
+	return result.Copy()
 }
 
 // Equals compares two packages to be identical

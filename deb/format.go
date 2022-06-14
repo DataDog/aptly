@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode"
 	"unsafe"
+	"encoding/json"
 )
 
 // MaxFieldSize is maximum stanza field size in bytes
@@ -96,6 +97,15 @@ var (
 // Stanza or paragraph of Debian control file
 type Stanza map[string]*strings.Builder
 
+func NewStanza(in map[string]string) Stanza {
+	stanza := Stanza{}
+	for k, v := range in {
+		stanza.Set(k, v)
+	}
+	return stanza
+}
+
+// Get returns the value for the given key in the stanza. It performs no allocations.
 func (s Stanza) Get(key string) string {
 	if s[key] == nil {
 		return ""
@@ -159,6 +169,12 @@ func (s Stanza) Export() map[string]string {
 	}
 
 	return ret
+}
+
+var _ json.Marshaler = (*Stanza)(nil)
+
+func (s *Stanza) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Export())
 }
 
 func isMultilineField(field string, isRelease bool) bool {

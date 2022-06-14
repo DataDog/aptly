@@ -84,11 +84,7 @@ func (collection *PackageCollection) ByKey(key []byte) (*Package, error) {
 			Recommends:        oldp.Recommends,
 		}
 
-		extra := Stanza{}
-		for k, v := range oldp.Extra {
-			extra.Set(k, v)
-		}
-
+		extra := NewStanza(oldp.Extra)
 		p.extra = &extra
 		for i := range oldp.Files {
 			oldp.Files[i].Filename = filepath.Base(oldp.Files[i].Filename)
@@ -128,11 +124,8 @@ func (collection *PackageCollection) loadExtra(p *Package) *Stanza {
 		panic("unable to decode extra")
 	}
 
-	stanza := Stanza{}
-	for k, v := range *data {
-		stanza.Set(k, v)
-	}
-	return &stanza
+	ret := NewStanza(*data)
+	return &ret
 }
 
 // loadDependencies loads dependencies for the package
@@ -273,13 +266,8 @@ func (collection *PackageCollection) UpdateInTransaction(p *Package, transaction
 	}
 
 	if p.extra != nil {
-		data := map[string]string{}
-		for k, v := range *p.extra {
-			data[k] = v.String()
-		}
-
 		encodeBuffer.Reset()
-		err = encoder.Encode(data)
+		err = encoder.Encode(p.extra.Export())
 		if err != nil {
 			return err
 		}
