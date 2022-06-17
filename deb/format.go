@@ -410,8 +410,7 @@ func (c *ControlFileReader) ReadBufferedStanza(stanza Stanza) error {
 				stanza[lastField].Write(bytes.TrimSpace(lineBytes))
 			}
 		} else {
-			lineStr := *(*string)(unsafe.Pointer(&lineBytes))
-			splitIndex := strings.IndexByte(lineStr, ':')
+			splitIndex := bytes.IndexByte(lineBytes, ':')
 			if splitIndex == -1 {
 				stanza = nil
 				return ErrMalformedStanza
