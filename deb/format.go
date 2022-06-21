@@ -435,9 +435,10 @@ func (c *ControlFileReader) ReadBufferedStanza(stanza Stanza) error {
 					stanza[lastField].WriteByte('\n')
 				}
 			} else {
+				toWrite := bytes.TrimSpace(lastFieldValue)
 				stanza[lastField].Reset()
-				stanza[lastField].Grow(len(lastFieldValue))
-				stanza[lastField].Write(bytes.TrimSpace(lastFieldValue))
+				stanza[lastField].Grow(len(toWrite))
+				stanza[lastField].Write(toWrite)
 			}
 		}
 	}
