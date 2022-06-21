@@ -5,10 +5,10 @@ name: CI
 on:
   pull_request:
   push:
-    tags:
-      - 'v*'
-    branches:
-      - 'master'
+    # tags:
+    #   - 'v*'
+    # branches:
+    #   - 'master'
 
 defaults:
   run:
