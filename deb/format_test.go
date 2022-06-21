@@ -3,9 +3,9 @@ package deb
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"os"
 	"strings"
-	"encoding/json"
 
 	. "gopkg.in/check.v1"
 )
@@ -187,7 +187,7 @@ func (s *ControlFileSuite) TestStanzaMarshal(c *C) {
 	c.Assert(err1, IsNil)
 
 	var data map[string]string
-    err2 := json.Unmarshal(buf, &data)
+	err2 := json.Unmarshal(buf, &data)
 	c.Assert(err2, IsNil)
 
 	stanza2 := NewStanza(data)

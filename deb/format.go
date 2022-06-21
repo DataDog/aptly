@@ -3,13 +3,13 @@ package deb
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"sort"
 	"strings"
 	"unicode"
 	"unsafe"
-	"encoding/json"
 )
 
 // MaxFieldSize is maximum stanza field size in bytes
