@@ -525,13 +525,15 @@ func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.
 		}
 
 		sreader := NewControlFileReader(packagesReader, false, isInstaller)
+		stanza := make(Stanza, 32)
 
 		for {
-			stanza, err := sreader.ReadStanza()
+			stanza.Clear()
+			err = sreader.ReadBufferedStanza(stanza)
 			if err != nil {
 				return err
 			}
-			if stanza == nil {
+			if stanza.Empty() {
 				break
 			}
 

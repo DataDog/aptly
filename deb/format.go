@@ -27,6 +27,12 @@ func (s Stanza) Reset(key string) {
 	s[key] = ""
 }
 
+func (s Stanza) Clear() {
+	for k, _ := range s {
+		s[k] = ""
+	}
+}
+
 // MaxFieldSize is maximum stanza field size in bytes
 const MaxFieldSize = 2 * 1024 * 1024
 
