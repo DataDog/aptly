@@ -2,12 +2,12 @@ package deb
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"sort"
 	"strings"
 	"unicode"
-	"bytes"
 	"unsafe"
 )
 
@@ -28,7 +28,7 @@ func (s Stanza) Reset(key string) {
 }
 
 func (s Stanza) Clear() {
-	for k, _ := range s {
+	for k := range s {
 		s[k] = ""
 	}
 }
