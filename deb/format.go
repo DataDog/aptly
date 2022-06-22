@@ -363,9 +363,9 @@ func (c *ControlFileReader) ReadBufferedStanza(stanza Stanza) error {
 
 			lastValueBytes := lineBytes[splitIndex+1:]
 			if lastFieldMultiline {
-				lastValue.Grow(len(lastValueBytes) + 1)
-				lastValue.Write(lastValueBytes)
 				if len(lastValueBytes) > 0 {
+					lastValue.Grow(len(lastValueBytes) + 1)
+					lastValue.Write(lastValueBytes)
 					lastValue.WriteByte('\n')
 				}
 			} else {
