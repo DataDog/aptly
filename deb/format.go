@@ -14,6 +14,19 @@ import (
 // Stanza or paragraph of Debian control file
 type Stanza map[string]string
 
+func (s Stanza) Empty() bool {
+	for _, val := range s {
+		if val != "" {
+			return false
+		}
+	}
+	return true
+}
+
+func (s Stanza) Reset(key string) {
+	s[key] = ""
+}
+
 // MaxFieldSize is maximum stanza field size in bytes
 const MaxFieldSize = 2 * 1024 * 1024
 
@@ -209,6 +222,7 @@ func (s Stanza) WriteTo(w *bufio.Writer, isSource, isRelease, isInstaller bool) 
 // Parsing errors
 var (
 	ErrMalformedStanza = errors.New("malformed stanza syntax")
+	ErrInvalidArgument = errors.New("invalid argument")
 )
 
 // canonicalCase converts the input to canonical case and returns this value as a new string
@@ -290,20 +304,36 @@ func NewControlFileReader(r io.Reader, isRelease, isInstaller bool) *ControlFile
 	}
 }
 
-// ReadStanza reeads one stanza from control file
+// ReadStanza reads one stanza from control file
 func (c *ControlFileReader) ReadStanza() (Stanza, error) {
-	stanza := make(Stanza, 32)
+	buf := make(Stanza, 32)
+	err := c.ReadBufferedStanza(buf)
+	if err != nil {
+		return nil, err
+	}
+	if !buf.Empty() {
+		return buf, nil
+	}
+	return nil, nil
+}
+
+// ReadBufferedStanza reads one stanza from control file into the provided stanza
+func (c *ControlFileReader) ReadBufferedStanza(stanza Stanza) error {
+	if stanza == nil {
+		return ErrInvalidArgument
+	}
+
 	lastField := ""
-	lastValue := strings.Builder{}
 	lastFieldMultiline := c.isInstaller
+	lastValue := strings.Builder{}
 
 	for c.scanner.Scan() {
 		lineBytes := c.scanner.Bytes()
 
 		// Current stanza ends with empty line
 		if len(lineBytes) == 0 {
-			if len(stanza) > 0 {
-				return stanza, nil
+			if !stanza.Empty() {
+				return nil
 			}
 			continue
 		}
@@ -311,9 +341,12 @@ func (c *ControlFileReader) ReadStanza() (Stanza, error) {
 		lastFieldFinished := !(lineBytes[0] == ' ' || lineBytes[0] == '\t' || c.isInstaller)
 
 		if lastFieldFinished {
+			lastValue.Reset()
+
 			splitIndex := bytes.IndexByte(lineBytes, ':')
 			if splitIndex == -1 {
-				return nil, ErrMalformedStanza
+				stanza = nil
+				return ErrMalformedStanza
 			}
 
 			// It's safe to pass a pointer to the lastField's underlying byte array
@@ -321,7 +354,6 @@ func (c *ControlFileReader) ReadStanza() (Stanza, error) {
 			lastFieldBytes := lineBytes[:splitIndex]
 			lastField = canonicalCase(*(*string)(unsafe.Pointer(&lastFieldBytes)))
 			lastFieldMultiline = isMultilineField(lastField, c.isRelease)
-			lastValue.Reset()
 
 			lastValueBytes := lineBytes[splitIndex+1:]
 			if lastFieldMultiline {
@@ -351,11 +383,5 @@ func (c *ControlFileReader) ReadStanza() (Stanza, error) {
 		}
 	}
 
-	if err := c.scanner.Err(); err != nil {
-		return nil, err
-	}
-	if len(stanza) > 0 {
-		return stanza, nil
-	}
-	return nil, nil
+	return c.scanner.Err()
 }
