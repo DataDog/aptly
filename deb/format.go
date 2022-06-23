@@ -33,6 +33,24 @@ func (s Stanza) Clear() {
 	}
 }
 
+func (s Stanza) Clean() {
+	for k, v := range s {
+		if v == "" {
+			delete(s, k)
+		}
+	}
+}
+
+func (s Stanza) Copy() Stanza {
+	result := make(map[string]string, len(s))
+	for k, v := range s {
+		if v != "" {
+			result[k] = v
+		}
+	}
+	return result
+}
+
 // MaxFieldSize is maximum stanza field size in bytes
 const MaxFieldSize = 2 * 1024 * 1024
 
@@ -114,15 +132,6 @@ var (
 		"",
 	}
 )
-
-// Copy returns copy of Stanza
-func (s Stanza) Copy() (result Stanza) {
-	result = make(Stanza, len(s))
-	for k, v := range s {
-		result[k] = v
-	}
-	return
-}
 
 func isMultilineField(field string, isRelease bool) bool {
 	switch field {

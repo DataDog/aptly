@@ -238,7 +238,9 @@ func (p *Package) ExtendedStanza() Stanza {
 
 // MarshalJSON implements json.Marshaller interface
 func (p *Package) MarshalJSON() ([]byte, error) {
-	return json.Marshal(p.ExtendedStanza())
+	stanza := p.ExtendedStanza()
+	stanza.Clean()
+	return json.Marshal(stanza)
 }
 
 // GetField returns fields from package

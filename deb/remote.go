@@ -688,6 +688,8 @@ func (repo *RemoteRepo) Encode() []byte {
 	var buf bytes.Buffer
 
 	encoder := codec.NewEncoder(&buf, &codec.MsgpackHandle{})
+
+	repo.Meta.Clean()
 	encoder.Encode(repo)
 
 	return buf.Bytes()
