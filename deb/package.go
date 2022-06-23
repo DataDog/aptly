@@ -116,6 +116,13 @@ func NewPackageFromControlFile(input Stanza) *Package {
 
 	result.Provides = parseDependencies(input, "Provides")
 
+	// This copy operation below is necessary for the `extra` field to not get overwritten. However, it introduces
+	// a large number of allocations. For our purposes, making sure the `extra` field is correct is not necessary,
+	// so we'll choose not to do it (for now).
+	//
+	// extra := input.Copy()
+	// result.extra = &extra
+
 	result.extra = &input
 
 	return result
@@ -158,6 +165,13 @@ func NewSourcePackageFromControlFile(input Stanza) (*Package, error) {
 	depends.BuildDepends = parseDependencies(input, "Build-Depends")
 	depends.BuildDependsInDep = parseDependencies(input, "Build-Depends-Indep")
 	result.deps = depends
+
+	// This copy operation below is necessary for the `extra` field to not get overwritten. However, it introduces
+	// a large number of allocations. For our purposes, making sure the `extra` field is correct is not necessary,
+	// so we'll choose not to do it (for now).
+	//
+	// extra := input.Copy()
+	// result.extra = &extra
 
 	result.extra = &input
 
@@ -238,7 +252,9 @@ func (p *Package) ExtendedStanza() Stanza {
 
 // MarshalJSON implements json.Marshaller interface
 func (p *Package) MarshalJSON() ([]byte, error) {
-	return json.Marshal(p.ExtendedStanza())
+	stanza := p.ExtendedStanza()
+	stanza.Clean()
+	return json.Marshal(stanza)
 }
 
 // GetField returns fields from package

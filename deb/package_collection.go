@@ -265,6 +265,7 @@ func (collection *PackageCollection) UpdateInTransaction(p *Package, transaction
 
 	if p.extra != nil {
 		encodeBuffer.Reset()
+		(*p.extra).Clean()
 		err = encoder.Encode(*p.extra)
 		if err != nil {
 			return err
