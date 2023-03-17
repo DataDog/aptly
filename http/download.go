@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -56,7 +55,7 @@ func NewDownloader(downLimit int64, maxTries int, progress aptly.Progress) aptly
 
 	progressWriter := io.Writer(progress)
 	if progress == nil {
-		progressWriter = ioutil.Discard
+		progressWriter = io.Discard
 	}
 
 	downloader.client.CheckRedirect = downloader.checkRedirect
@@ -111,6 +110,10 @@ func (downloader *downloaderImpl) GetLength(ctx context.Context, url string) (in
 	}
 
 	if resp.ContentLength < 0 {
+		// an existing, but zero-length file can be reported with ContentLength -1
+		if resp.StatusCode == 200 && resp.ContentLength == -1 {
+			return 0, nil
+		}
 		return -1, fmt.Errorf("could not determine length of %s", url)
 	}
 

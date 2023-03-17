@@ -19,10 +19,13 @@
     "ppaDistributorID": "ubuntu",
     "ppaCodename": "",
     "skipContentsPublishing": false,
+    "skipBz2Publishing": false,
     "FileSystemPublishEndpoints": {},
     "S3PublishEndpoints": {},
     "SwiftPublishEndpoints": {},
     "AzurePublishEndpoints": {},
     "AsyncAPI": false,
-    "enableMetricsEndpoint": true
+    "enableMetricsEndpoint": true,
+    "logLevel": "debug",
+    "logFormat": "default"
 }

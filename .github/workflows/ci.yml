@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: [1.16, 1.17, 1.18]
+        go: [1.17, 1.18, 1.19]
         run_long_tests: [no]
         allow_failure: [false]
         include:
@@ -36,7 +36,7 @@ jobs:
           # - go: master
           #   run_long_tests: no
           #   allow_failure: true
-          - go: 1.17
+          - go: 1.18
             run_long_tests: yes
             allow_failure: false
 
@@ -51,14 +51,19 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
 
+      - name: Get aptly version
+        run: |
+           make version
+           go generate
+
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.45.0
+          version: v1.50.1
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -79,10 +84,8 @@ jobs:
       - name: Install Azurite
         id: azuright
         uses: potatoqualitee/azuright@v1.1
-
-      - name: Get aptly version
-        run: |
-           make version
+        with:
+          directory: ${{ runner.temp }}
 
       - name: Make
         env:
@@ -91,7 +94,20 @@ jobs:
           AZURE_STORAGE_ACCOUNT: "devstoreaccount1"
           AZURE_STORAGE_ACCESS_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
         run: |
-          make
+          COVERAGE_DIR=${{ runner.temp }} make
+
+      - name: Merge code coverage
+        if: matrix.run_long_tests == 'yes'
+        run: |
+          go install github.com/wadey/gocovmerge@latest
+          ~/go/bin/gocovmerge unit.out ${{ runner.temp }}/*.out > coverage.txt
+
+      - name: Upload code coverage
+        if: matrix.run_long_tests == 'yes'
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.txt
 
   release:
     name: release

@@ -2,10 +2,15 @@ package api
 
 import (
 	"net/http"
+	"os"
+	"sync/atomic"
 
+	"github.com/DataDog/aptly"
 	ctx "github.com/DataDog/aptly/context"
+	"github.com/DataDog/aptly/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog/log"
 )
 
 var context *ctx.AptlyContext
@@ -18,17 +23,32 @@ func apiMetricsGet() gin.HandlerFunc {
 
 // Router returns prebuilt with routes http.Handler
 func Router(c *ctx.AptlyContext) http.Handler {
+	if aptly.EnableDebug {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	router := gin.New()
 	context = c
 
-	router := gin.Default()
-	router.Use(gin.ErrorLogger())
+	router.UseRawPath = true
+
+	if c.Config().LogFormat == "json" {
+		c.StructuredLogging(true)
+		utils.SetupJSONLogger(c.Config().LogLevel, os.Stdout)
+		gin.DefaultWriter = utils.LogWriter{Logger: log.Logger}
+		router.Use(JSONLogger())
+	} else {
+		c.StructuredLogging(false)
+		utils.SetupDefaultLogger(c.Config().LogLevel)
+		router.Use(gin.Logger())
+	}
+
+	router.Use(gin.Recovery(), gin.ErrorLogger())
 
 	if c.Config().EnableMetricsEndpoint {
-		router.Use(instrumentHandlerInFlight(apiRequestsInFlightGauge, getBasePath))
-		router.Use(instrumentHandlerCounter(apiRequestsTotalCounter, getBasePath))
-		router.Use(instrumentHandlerRequestSize(apiRequestSizeSummary, getBasePath))
-		router.Use(instrumentHandlerResponseSize(apiResponseSizeSummary, getBasePath))
-		router.Use(instrumentHandlerDuration(apiRequestsDurationSummary, getBasePath))
+		MetricsCollectorRegistrar.Register(router)
 	}
 
 	if context.Flags().Lookup("no-lock").Value.Get().(bool) {
@@ -47,7 +67,7 @@ func Router(c *ctx.AptlyContext) http.Handler {
 
 			err = <-errCh
 			if err != nil {
-				c.AbortWithError(500, err)
+				AbortWithJSONError(c, 500, err)
 				return
 			}
 
@@ -55,7 +75,7 @@ func Router(c *ctx.AptlyContext) http.Handler {
 				dbRequests <- dbRequest{releasedb, errCh}
 				err = <-errCh
 				if err != nil {
-					c.AbortWithError(500, err)
+					AbortWithJSONError(c, 500, err)
 				}
 			}()
 
@@ -70,6 +90,12 @@ func Router(c *ctx.AptlyContext) http.Handler {
 			root.GET("/metrics", apiMetricsGet())
 		}
 		root.GET("/version", apiVersion)
+
+		isReady := &atomic.Value{}
+		isReady.Store(false)
+		defer isReady.Store(true)
+		root.GET("/ready", apiReady(isReady))
+		root.GET("/healthy", apiHealthy)
 	}
 
 	{
@@ -133,10 +159,12 @@ func Router(c *ctx.AptlyContext) http.Handler {
 		root.GET("/snapshots/:name/packages", apiSnapshotsSearchPackages)
 		root.DELETE("/snapshots/:name", apiSnapshotsDrop)
 		root.GET("/snapshots/:name/diff/:withSnapshot", apiSnapshotsDiff)
+		root.POST("/snapshots/merge", apiSnapshotsMerge)
 	}
 
 	{
 		root.GET("/packages/:key", apiPackagesShow)
+		root.GET("/packages", apiPackages)
 	}
 
 	{

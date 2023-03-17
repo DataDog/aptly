@@ -48,6 +48,7 @@ type AptlyContext struct {
 	publishedStorages map[string]aptly.PublishedStorage
 	dependencyOptions int
 	architecturesList []string
+	structuredLogging bool
 	// Debug features
 	fileCPUProfile *os.File
 	fileMemProfile *os.File
@@ -195,7 +196,7 @@ func (context *AptlyContext) Progress() aptly.Progress {
 
 func (context *AptlyContext) _progress() aptly.Progress {
 	if context.progress == nil {
-		context.progress = console.NewProgress()
+		context.progress = console.NewProgress(context.structuredLogging)
 		context.progress.Start()
 	}
 
@@ -393,7 +394,7 @@ func (context *AptlyContext) GetPublishedStorage(name string) aptly.PublishedSto
 				params.AccessKeyID, params.SecretAccessKey, params.SessionToken,
 				params.Region, params.Endpoint, params.Bucket, params.ACL, params.Prefix, params.StorageClass,
 				params.EncryptionMethod, params.PlusWorkaround, params.DisableMultiDel,
-				params.ForceSigV2, params.Debug)
+				params.ForceSigV2, params.ForceVirtualHostedStyle, params.Debug)
 			if err != nil {
 				Fatal(err)
 			}
@@ -538,6 +539,11 @@ func (context *AptlyContext) GoContextHandleSignals() {
 		context.Progress().PrintfStdErr("Aborting... press ^C once again to abort immediately\n")
 		cancel()
 	}()
+}
+
+// StructuredLogging allows to set the structuredLogging flag
+func (context *AptlyContext) StructuredLogging(structuredLogging bool) {
+	context.structuredLogging = structuredLogging
 }
 
 // Shutdown shuts context down
