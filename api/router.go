@@ -5,7 +5,7 @@ import (
 	"os"
 	"sync/atomic"
 
-	"github.com/DataDog/aptly"
+	"github.com/DataDog/aptly/aptly"
 	ctx "github.com/DataDog/aptly/context"
 	"github.com/DataDog/aptly/utils"
 	"github.com/gin-gonic/gin"
