@@ -13,10 +13,10 @@ import (
 
 	// TODO: replace crypto/openpgp since it is deprecated
 	// https://github.com/golang/go/issues/44226
-	"golang.org/x/crypto/openpgp"        //nolint:staticcheck
-	"golang.org/x/crypto/openpgp/armor"  //nolint:staticcheck
-	"golang.org/x/crypto/openpgp/errors" //nolint:staticcheck
-	"golang.org/x/crypto/openpgp/packet" //nolint:staticcheck
+	"github.com/ProtonMail/go-crypto/openpgp"        //nolint:staticcheck
+	"github.com/ProtonMail/go-crypto/openpgp/armor"  //nolint:staticcheck
+	"github.com/ProtonMail/go-crypto/openpgp/errors" //nolint:staticcheck
+	"github.com/ProtonMail/go-crypto/openpgp/packet" //nolint:staticcheck
 )
 
 // hashForSignature returns a pair of hashes that can be used to verify a
@@ -51,7 +51,7 @@ type signatureResult struct {
 // returns the signer if the signature is valid. If the signer isn't known,
 // ErrUnknownIssuer is returned.
 //
-// This is extended version of golang.org/x/crypto/openpgp to support multiple signers and returns multiple
+// This is extended version of github.com/ProtonMail/go-crypto/openpgp to support multiple signers and returns multiple
 // signers, plus keeps track of "missing" keys
 func checkDetachedSignature(keyring openpgp.KeyRing, signed, signature io.Reader) (signers []signatureResult, missingKeys int, err error) {
 	var p packet.Packet
@@ -169,7 +169,7 @@ func readArmored(r io.Reader, expectedType string) (body io.Reader, err error) {
 // checkArmoredDetachedSignature performs the same actions as
 // CheckDetachedSignature but expects the signature to be armored.
 //
-// This is extended version of golang.org/x/crypto/openpgp to support multiple signers and returns multiple
+// This is extended version of github.com/ProtonMail/go-crypto/openpgp to support multiple signers and returns multiple
 // signers, plus keeps track of "missing" keys
 func checkArmoredDetachedSignature(keyring openpgp.KeyRing, signed, signature io.Reader) (signers []signatureResult, missingKeys int, err error) {
 	body, err := readArmored(signature, openpgp.SignatureType)
