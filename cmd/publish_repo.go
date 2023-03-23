@@ -42,11 +42,13 @@ Example:
 	cmd.Flag.Bool("batch", false, "run GPG with detached tty")
 	cmd.Flag.Bool("skip-signing", false, "don't sign Release files with GPG")
 	cmd.Flag.Bool("skip-contents", false, "don't generate Contents indexes")
+	cmd.Flag.Bool("skip-bz2", false, "don't generate bzipped indexes")
 	cmd.Flag.String("origin", "", "origin name to publish")
 	cmd.Flag.String("notautomatic", "", "set value for NotAutomatic field")
 	cmd.Flag.String("butautomaticupgrades", "", "set  value for ButAutomaticUpgrades field")
 	cmd.Flag.String("label", "", "label to publish")
 	cmd.Flag.String("suite", "", "suite to publish (defaults to distribution)")
+	cmd.Flag.String("codename", "", "codename to publish (defaults to distribution)")
 	cmd.Flag.Bool("force-overwrite", false, "overwrite files in package pool in case of mismatch")
 	cmd.Flag.Bool("acquire-by-hash", false, "provide index files by hash")
 

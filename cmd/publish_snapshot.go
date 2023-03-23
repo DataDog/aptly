@@ -132,11 +132,17 @@ func aptlyPublishSnapshotOrRepo(cmd *commander.Command, args []string) error {
 	}
 	published.Label = context.Flags().Lookup("label").Value.String()
 	published.Suite = context.Flags().Lookup("suite").Value.String()
+	published.Codename = context.Flags().Lookup("codename").Value.String()
 
 	published.SkipContents = context.Config().SkipContentsPublishing
 
 	if context.Flags().IsSet("skip-contents") {
 		published.SkipContents = context.Flags().Lookup("skip-contents").Value.Get().(bool)
+	}
+
+	published.SkipBz2 = context.Config().SkipBz2Publishing
+	if context.Flags().IsSet("skip-bz2") {
+		published.SkipBz2 = context.Flags().Lookup("skip-bz2").Value.Get().(bool)
 	}
 
 	if context.Flags().IsSet("acquire-by-hash") {
@@ -228,11 +234,13 @@ Example:
 	cmd.Flag.Bool("batch", false, "run GPG with detached tty")
 	cmd.Flag.Bool("skip-signing", false, "don't sign Release files with GPG")
 	cmd.Flag.Bool("skip-contents", false, "don't generate Contents indexes")
+	cmd.Flag.Bool("skip-bz2", false, "don't generate bzipped indexes")
 	cmd.Flag.String("origin", "", "overwrite origin name to publish")
 	cmd.Flag.String("notautomatic", "", "overwrite value for NotAutomatic field")
 	cmd.Flag.String("butautomaticupgrades", "", "overwrite value for ButAutomaticUpgrades field")
 	cmd.Flag.String("label", "", "label to publish")
 	cmd.Flag.String("suite", "", "suite to publish (defaults to distribution)")
+	cmd.Flag.String("codename", "", "codename to publish (defaults to distribution)")
 	cmd.Flag.Bool("force-overwrite", false, "overwrite files in package pool in case of mismatch")
 	cmd.Flag.Bool("acquire-by-hash", false, "provide index files by hash")
 

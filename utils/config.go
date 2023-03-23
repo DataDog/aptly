@@ -28,12 +28,15 @@ type ConfigStructure struct { // nolint: maligned
 	PpaDistributorID       string                           `json:"ppaDistributorID"`
 	PpaCodename            string                           `json:"ppaCodename"`
 	SkipContentsPublishing bool                             `json:"skipContentsPublishing"`
+	SkipBz2Publishing      bool                             `json:"skipBz2Publishing"`
 	FileSystemPublishRoots map[string]FileSystemPublishRoot `json:"FileSystemPublishEndpoints"`
 	S3PublishRoots         map[string]S3PublishRoot         `json:"S3PublishEndpoints"`
 	SwiftPublishRoots      map[string]SwiftPublishRoot      `json:"SwiftPublishEndpoints"`
 	AzurePublishRoots      map[string]AzurePublishRoot      `json:"AzurePublishEndpoints"`
 	AsyncAPI               bool                             `json:"AsyncAPI"`
 	EnableMetricsEndpoint  bool                             `json:"enableMetricsEndpoint"`
+	LogLevel               string                           `json:"logLevel"`
+	LogFormat              string                           `json:"logFormat"`
 }
 
 // FileSystemPublishRoot describes single filesystem publishing entry point
@@ -45,20 +48,21 @@ type FileSystemPublishRoot struct {
 
 // S3PublishRoot describes single S3 publishing entry point
 type S3PublishRoot struct {
-	Region           string `json:"region"`
-	Bucket           string `json:"bucket"`
-	Endpoint         string `json:"endpoint"`
-	AccessKeyID      string `json:"awsAccessKeyID"`
-	SecretAccessKey  string `json:"awsSecretAccessKey"`
-	SessionToken     string `json:"awsSessionToken"`
-	Prefix           string `json:"prefix"`
-	ACL              string `json:"acl"`
-	StorageClass     string `json:"storageClass"`
-	EncryptionMethod string `json:"encryptionMethod"`
-	PlusWorkaround   bool   `json:"plusWorkaround"`
-	DisableMultiDel  bool   `json:"disableMultiDel"`
-	ForceSigV2       bool   `json:"forceSigV2"`
-	Debug            bool   `json:"debug"`
+	Region                  string `json:"region"`
+	Bucket                  string `json:"bucket"`
+	Endpoint                string `json:"endpoint"`
+	AccessKeyID             string `json:"awsAccessKeyID"`
+	SecretAccessKey         string `json:"awsSecretAccessKey"`
+	SessionToken            string `json:"awsSessionToken"`
+	Prefix                  string `json:"prefix"`
+	ACL                     string `json:"acl"`
+	StorageClass            string `json:"storageClass"`
+	EncryptionMethod        string `json:"encryptionMethod"`
+	PlusWorkaround          bool   `json:"plusWorkaround"`
+	DisableMultiDel         bool   `json:"disableMultiDel"`
+	ForceSigV2              bool   `json:"forceSigV2"`
+	ForceVirtualHostedStyle bool   `json:"forceVirtualHostedStyle"`
+	Debug                   bool   `json:"debug"`
 }
 
 // SwiftPublishRoot describes single OpenStack Swift publishing entry point
@@ -110,6 +114,8 @@ var Config = ConfigStructure{
 	AzurePublishRoots:      map[string]AzurePublishRoot{},
 	AsyncAPI:               false,
 	EnableMetricsEndpoint:  false,
+	LogLevel:               "debug",
+	LogFormat:              "default",
 }
 
 // LoadConfig loads configuration from json file

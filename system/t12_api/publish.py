@@ -1,7 +1,7 @@
-import os
 import inspect
+import os
 
-from api_lib import APITest
+from api_lib import TASK_SUCCEEDED, APITest
 
 DefaultSigningOptions = {
     "Keyring": os.path.join(os.path.dirname(inspect.getsourcefile(APITest)), "files") + "/aptly.pub",
@@ -26,7 +26,7 @@ class PublishAPITestRepo(APITest):
                                      "pyspi_0.6.1-1.3.diff.gz", "pyspi_0.6.1.orig.tar.gz",
                                      "pyspi-0.6.1-1.3.stripped.dsc").status_code, 200)
 
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         # publishing under prefix, default distribution
         prefix = self.random_name()
@@ -41,6 +41,7 @@ class PublishAPITestRepo(APITest):
         repo_expected = {
             'AcquireByHash': False,
             'Architectures': ['i386', 'source'],
+            'Codename': '',
             'Distribution': 'wheezy',
             'Label': '',
             'Origin': '',
@@ -54,7 +55,7 @@ class PublishAPITestRepo(APITest):
             'Storage': '',
             'Suite': ''}
 
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
 
         all_repos = self.get("/api/publish")
         self.check_equal(all_repos.status_code, 200)
@@ -82,10 +83,11 @@ class PublishAPITestRepo(APITest):
                  "Architectures": ["i386", "amd64"],
             }
         )
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
         repo2_expected = {
             'AcquireByHash': False,
             'Architectures': ['amd64', 'i386'],
+            'Codename': '',
             'Distribution': distribution,
             'Label': '',
             'Origin': '',
@@ -135,9 +137,9 @@ class PublishSnapshotAPITest(APITest):
         self.check_equal(self.upload("/api/files/" + d,
                                      "libboost-program-options-dev_1.49.0.1_i386.deb").status_code, 200)
 
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
-        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot_name}).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot_name}).json()['State'], TASK_SUCCEEDED)
 
         prefix = self.random_name()
         resp = self.post_task(
@@ -154,7 +156,7 @@ class PublishSnapshotAPITest(APITest):
                 "Label": "fun",
             }
         )
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
 
         _id = resp.json()['ID']
         resp = self.get("/api/tasks/" + str(_id) + "/detail")
@@ -164,6 +166,7 @@ class PublishSnapshotAPITest(APITest):
         repo_expected = {
             'AcquireByHash': True,
             'Architectures': ['i386'],
+            'Codename': '',
             'Distribution': 'squeeze',
             'Label': 'fun',
             'Origin': 'earth',
@@ -209,7 +212,7 @@ class PublishUpdateAPITestRepo(APITest):
                         "pyspi_0.6.1-1.3.dsc",
                         "pyspi_0.6.1-1.3.diff.gz", "pyspi_0.6.1.orig.tar.gz",
                         "pyspi-0.6.1-1.3.stripped.dsc").status_code, 200)
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         prefix = self.random_name()
         resp = self.post_task(
@@ -222,7 +225,7 @@ class PublishUpdateAPITestRepo(APITest):
             }
         )
 
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
 
         self.check_not_exists(
             "public/" + prefix + "/pool/main/b/boost-defaults/libboost-program-options-dev_1.49.0.1_i386.deb")
@@ -232,10 +235,10 @@ class PublishUpdateAPITestRepo(APITest):
         d = self.random_name()
         self.check_equal(self.upload("/api/files/" + d,
                          "libboost-program-options-dev_1.49.0.1_i386.deb").status_code, 200)
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         self.check_equal(self.delete_task("/api/repos/" + repo_name + "/packages/",
-                         json={"PackageRefs": ['Psource pyspi 0.6.1-1.4 f8f1daa806004e89']}).json()['State'], 2)
+                         json={"PackageRefs": ['Psource pyspi 0.6.1-1.4 f8f1daa806004e89']}).json()['State'], TASK_SUCCEEDED)
 
         # Update and switch AcquireByHash on.
         resp = self.put_task(
@@ -245,10 +248,11 @@ class PublishUpdateAPITestRepo(APITest):
                 "Signing": DefaultSigningOptions,
             }
         )
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
         repo_expected = {
             'AcquireByHash': True,
             'Architectures': ['i386', 'source'],
+            'Codename': '',
             'Distribution': 'wheezy',
             'Label': '',
             'Origin': '',
@@ -274,7 +278,7 @@ class PublishUpdateAPITestRepo(APITest):
         self.check_not_exists(
             "public/" + prefix + "/pool/main/p/pyspi/pyspi-0.6.1-1.3.stripped.dsc")
 
-        self.check_equal(self.delete_task("/api/publish/" + prefix + "/wheezy").json()['State'], 2)
+        self.check_equal(self.delete_task("/api/publish/" + prefix + "/wheezy").json()['State'], TASK_SUCCEEDED)
         self.check_not_exists("public/" + prefix + "dists/")
 
 
@@ -295,7 +299,7 @@ class PublishUpdateSkipCleanupAPITestRepo(APITest):
                         "pyspi_0.6.1-1.3.dsc",
                         "pyspi_0.6.1-1.3.diff.gz", "pyspi_0.6.1.orig.tar.gz",
                         "pyspi-0.6.1-1.3.stripped.dsc").status_code, 200)
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         prefix = self.random_name()
         resp = self.post_task("/api/publish/" + prefix,
@@ -306,7 +310,7 @@ class PublishUpdateSkipCleanupAPITestRepo(APITest):
                                   "Signing": DefaultSigningOptions,
                               })
 
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
 
         self.check_not_exists(
             "public/" + prefix + "/pool/main/b/boost-defaults/libboost-program-options-dev_1.49.0.1_i386.deb")
@@ -324,25 +328,26 @@ class PublishUpdateSkipCleanupAPITestRepo(APITest):
                                   "Signing": DefaultSigningOptions,
                               })
 
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
 
         d = self.random_name()
         self.check_equal(self.upload("/api/files/" + d,
                          "libboost-program-options-dev_1.49.0.1_i386.deb").status_code, 200)
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         self.check_equal(self.delete_task("/api/repos/" + repo_name + "/packages/",
-                         json={"PackageRefs": ['Psource pyspi 0.6.1-1.4 f8f1daa806004e89']}).json()['State'], 2)
+                         json={"PackageRefs": ['Psource pyspi 0.6.1-1.4 f8f1daa806004e89']}).json()['State'], TASK_SUCCEEDED)
 
         resp = self.put_task("/api/publish/" + prefix + "/wheezy",
                              json={
                                  "Signing": DefaultSigningOptions,
                                  "SkipCleanup": True,
                              })
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
         repo_expected = {
             'AcquireByHash': False,
             'Architectures': ['i386', 'source'],
+            'Codename': '',
             'Distribution': 'wheezy',
             'Label': '',
             'Origin': '',
@@ -365,7 +370,7 @@ class PublishUpdateSkipCleanupAPITestRepo(APITest):
         self.check_exists("public/" + prefix +
                           "/pool/main/p/pyspi/pyspi-0.6.1-1.3.stripped.dsc")
 
-        self.check_equal(self.delete_task("/api/publish/" + prefix + "/wheezy", params={"SkipCleanup": "1"}).json()['State'], 2)
+        self.check_equal(self.delete_task("/api/publish/" + prefix + "/wheezy", params={"SkipCleanup": "1"}).json()['State'], TASK_SUCCEEDED)
         self.check_exists("public/" + prefix + "/pool/main/b/boost-defaults/libboost-program-options-dev_1.49.0.1_i386.deb")
         self.check_exists("public/" + prefix + "/pool/main/p/pyspi/pyspi-0.6.1-1.3.stripped.dsc")
 
@@ -387,10 +392,10 @@ class PublishSwitchAPITestRepo(APITest):
                         "pyspi_0.6.1-1.3.dsc",
                         "pyspi_0.6.1-1.3.diff.gz", "pyspi_0.6.1.orig.tar.gz",
                         "pyspi-0.6.1-1.3.stripped.dsc").status_code, 200)
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         snapshot1_name = self.random_name()
-        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot1_name}).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot1_name}).json()['State'], TASK_SUCCEEDED)
 
         prefix = self.random_name()
         resp = self.post_task(
@@ -402,10 +407,11 @@ class PublishSwitchAPITestRepo(APITest):
                 "Signing": DefaultSigningOptions,
             })
 
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
         repo_expected = {
             'AcquireByHash': False,
             'Architectures': ['i386', 'source'],
+            'Codename': '',
             'Distribution': 'wheezy',
             'Label': '',
             'NotAutomatic': '',
@@ -430,13 +436,13 @@ class PublishSwitchAPITestRepo(APITest):
         d = self.random_name()
         self.check_equal(self.upload("/api/files/" + d,
                          "libboost-program-options-dev_1.49.0.1_i386.deb").status_code, 200)
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         self.check_equal(self.delete_task("/api/repos/" + repo_name + "/packages/",
-                         json={"PackageRefs": ['Psource pyspi 0.6.1-1.4 f8f1daa806004e89']}).json()['State'], 2)
+                         json={"PackageRefs": ['Psource pyspi 0.6.1-1.4 f8f1daa806004e89']}).json()['State'], TASK_SUCCEEDED)
 
         snapshot2_name = self.random_name()
-        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot2_name}).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot2_name}).json()['State'], TASK_SUCCEEDED)
 
         resp = self.put_task(
             "/api/publish/" + prefix + "/wheezy",
@@ -445,10 +451,11 @@ class PublishSwitchAPITestRepo(APITest):
                 "Signing": DefaultSigningOptions,
                 "SkipContents": True,
             })
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
         repo_expected = {
             'AcquireByHash': False,
             'Architectures': ['i386', 'source'],
+            'Codename': '',
             'Distribution': 'wheezy',
             'Label': '',
             'Origin': '',
@@ -471,7 +478,7 @@ class PublishSwitchAPITestRepo(APITest):
         self.check_not_exists(
             "public/" + prefix + "/pool/main/p/pyspi/pyspi-0.6.1-1.3.stripped.dsc")
 
-        self.check_equal(self.delete_task("/api/publish/" + prefix + "/wheezy").json()['State'], 2)
+        self.check_equal(self.delete_task("/api/publish/" + prefix + "/wheezy").json()['State'], TASK_SUCCEEDED)
         self.check_not_exists("public/" + prefix + "dists/")
 
 
@@ -492,10 +499,10 @@ class PublishSwitchAPISkipCleanupTestRepo(APITest):
                         "pyspi_0.6.1-1.3.dsc",
                         "pyspi_0.6.1-1.3.diff.gz", "pyspi_0.6.1.orig.tar.gz",
                         "pyspi-0.6.1-1.3.stripped.dsc").status_code, 200)
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         snapshot1_name = self.random_name()
-        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot1_name}).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot1_name}).json()['State'], TASK_SUCCEEDED)
 
         prefix = self.random_name()
         resp = self.post_task("/api/publish/" + prefix,
@@ -506,10 +513,11 @@ class PublishSwitchAPISkipCleanupTestRepo(APITest):
                                   "Signing": DefaultSigningOptions,
                               })
 
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
         repo_expected = {
             'AcquireByHash': False,
             'Architectures': ['i386', 'source'],
+            'Codename': '',
             'Distribution': 'wheezy',
             'Label': '',
             'NotAutomatic': '',
@@ -542,10 +550,11 @@ class PublishSwitchAPISkipCleanupTestRepo(APITest):
                                   "Signing": DefaultSigningOptions,
                               })
 
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
         repo_expected = {
             'AcquireByHash': False,
             'Architectures': ['i386', 'source'],
+            'Codename': '',
             'Distribution': 'otherdist',
             'Label': '',
             'NotAutomatic': '',
@@ -565,13 +574,13 @@ class PublishSwitchAPISkipCleanupTestRepo(APITest):
         d = self.random_name()
         self.check_equal(self.upload("/api/files/" + d,
                          "libboost-program-options-dev_1.49.0.1_i386.deb").status_code, 200)
-        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + "/file/" + d).json()['State'], TASK_SUCCEEDED)
 
         self.check_equal(self.delete_task("/api/repos/" + repo_name + "/packages/",
-                         json={"PackageRefs": ['Psource pyspi 0.6.1-1.4 f8f1daa806004e89']}).json()['State'], 2)
+                         json={"PackageRefs": ['Psource pyspi 0.6.1-1.4 f8f1daa806004e89']}).json()['State'], TASK_SUCCEEDED)
 
         snapshot2_name = self.random_name()
-        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot2_name}).json()['State'], 2)
+        self.check_equal(self.post_task("/api/repos/" + repo_name + '/snapshots', json={'Name': snapshot2_name}).json()['State'], TASK_SUCCEEDED)
 
         resp = self.put_task("/api/publish/" + prefix + "/wheezy",
                              json={
@@ -580,10 +589,11 @@ class PublishSwitchAPISkipCleanupTestRepo(APITest):
                                  "SkipCleanup": True,
                                  "SkipContents": True,
                              })
-        self.check_equal(resp.json()['State'], 2)
+        self.check_equal(resp.json()['State'], TASK_SUCCEEDED)
         repo_expected = {
             'AcquireByHash': False,
             'Architectures': ['i386', 'source'],
+            'Codename': '',
             'Distribution': 'wheezy',
             'Label': '',
             'Origin': '',
@@ -604,6 +614,6 @@ class PublishSwitchAPISkipCleanupTestRepo(APITest):
         self.check_exists("public/" + prefix + "/pool/main/b/boost-defaults/libboost-program-options-dev_1.49.0.1_i386.deb")
         self.check_exists("public/" + prefix + "/pool/main/p/pyspi/pyspi-0.6.1-1.3.stripped.dsc")
 
-        self.check_equal(self.delete_task("/api/publish/" + prefix + "/wheezy", params={"SkipCleanup": "1"}).json()['State'], 2)
+        self.check_equal(self.delete_task("/api/publish/" + prefix + "/wheezy", params={"SkipCleanup": "1"}).json()['State'], TASK_SUCCEEDED)
         self.check_exists("public/" + prefix + "/pool/main/b/boost-defaults/libboost-program-options-dev_1.49.0.1_i386.deb")
         self.check_exists("public/" + prefix + "/pool/main/p/pyspi/pyspi-0.6.1-1.3.stripped.dsc")
