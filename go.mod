@@ -6,6 +6,7 @@ require (
 	github.com/AlekSi/pointer v1.0.0
 	github.com/Azure/azure-storage-blob-go v0.15.0
 	github.com/DisposaBoy/JsonConfigReader v0.0.0-20130112093355-33a99fdf1d5e
+	github.com/ProtonMail/go-crypto v0.0.0-20230321155629-9a39f2531310
 	github.com/awalterschulze/gographviz v0.0.0-20160912181450-761fd5fbb34e
 	github.com/aws/aws-sdk-go v1.34.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
@@ -38,9 +39,8 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 	github.com/ugorji/go/codec v1.2.7
 	github.com/wsxiaoys/terminal v0.0.0-20160513160801-0940f3fc43a0
-	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
-	golang.org/x/sys v0.3.0
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+	golang.org/x/sys v0.6.0
+	golang.org/x/term v0.6.0
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
