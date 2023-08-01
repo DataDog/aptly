@@ -1,4 +1,5 @@
 GOVERSION=$(shell go version | awk '{print $$3;}')
+GOPATH=$(shell go env GOPATH)
 TAG="$(shell git describe --tags --always)"
 VERSION=$(shell echo $(TAG) | sed 's@^v@@' | sed 's@-@+@g' | tr -d '\n')
 PACKAGES=context database deb files gpg http query swift s3 utils
@@ -11,7 +12,7 @@ COVERAGE_DIR?=$(shell mktemp -d)
 all: modules test bench check system-test
 
 prepare:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.1
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.51.2
 
 modules:
 	go mod download
@@ -19,7 +20,9 @@ modules:
 	go mod tidy -v
 
 dev:
-	go get -u github.com/laher/goxc
+	PATH=$(BINPATH)/:$(PATH)
+	go get github.com/laher/goxc
+	go install github.com/laher/goxc
 
 check: system/env
 ifeq ($(RUN_LONG_TESTS), yes)
