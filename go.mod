@@ -6,7 +6,7 @@ require (
 	github.com/AlekSi/pointer v1.0.0
 	github.com/Azure/azure-storage-blob-go v0.15.0
 	github.com/DisposaBoy/JsonConfigReader v0.0.0-20130112093355-33a99fdf1d5e
-	github.com/ProtonMail/go-crypto v0.0.0-20230321155629-9a39f2531310
+	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95
 	github.com/awalterschulze/gographviz v0.0.0-20160912181450-761fd5fbb34e
 	github.com/aws/aws-sdk-go v1.34.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
