@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	// TODO: replace crypto/openpgp since it is deprecated
-	// https://github.com/golang/go/issues/44226
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/go-crypto/openpgp/errors"
@@ -184,6 +182,8 @@ func pubkeyAlgorithmName(algorithm packet.PublicKeyAlgorithm) string {
 		return "EDCH"
 	case packet.PubKeyAlgoECDSA:
 		return "ECDSA"
+	case packet.PubKeyAlgoEdDSA:
+		return "EdDSA"
 	}
 
 	return "unknown"

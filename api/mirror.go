@@ -147,7 +147,7 @@ func apiMirrorsDrop(c *gin.Context) {
 
 	resources := []string{string(repo.Key())}
 	taskName := fmt.Sprintf("Delete mirror %s", name)
-	maybeRunTaskInBackground(c, taskName, resources, func(out aptly.Progress, detail *task.Detail) (*task.ProcessReturnValue, error) {
+	maybeRunTaskInBackground(c, taskName, resources, func(_ aptly.Progress, _ *task.Detail) (*task.ProcessReturnValue, error) {
 		err := repo.CheckLock()
 		if err != nil {
 			return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("unable to drop: %v", err)
@@ -157,7 +157,7 @@ func apiMirrorsDrop(c *gin.Context) {
 			snapshots := snapshotCollection.ByRemoteRepoSource(repo)
 
 			if len(snapshots) > 0 {
-				return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("won't delete mirror with snapshots, use 'force=1' to override")
+				return &task.ProcessReturnValue{Code: http.StatusForbidden, Value: nil}, fmt.Errorf("won't delete mirror with snapshots, use 'force=1' to override")
 			}
 		}
 

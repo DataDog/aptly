@@ -66,10 +66,11 @@ func NewPublishedStorageRaw(
 	plusWorkaround, disabledMultiDel, forceVirtualHostedStyle bool,
 	config *aws.Config,
 ) (*PublishedStorage, error) {
-
 	var acl types.ObjectCannedACL
-	if defaultACL == "" {
+	if defaultACL == "" || defaultACL == "private" {
 		acl = types.ObjectCannedACLPrivate
+	} else if defaultACL == "public-read" {
+		acl = types.ObjectCannedACLPublicRead
 	} else if defaultACL == "none" {
 		acl = ""
 	}
@@ -113,7 +114,7 @@ func NewPublishedStorage(
 
 	if endpoint != "" {
 		opts = append(opts, config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
 				return aws.Endpoint{URL: endpoint}, nil
 			},
 		)))
@@ -136,7 +137,7 @@ func (storage *PublishedStorage) String() string {
 }
 
 // MkDir creates directory recursively under public path
-func (storage *PublishedStorage) MkDir(path string) error {
+func (storage *PublishedStorage) MkDir(_ string) error {
 	// no op for S3
 	return nil
 }
@@ -232,11 +233,14 @@ func (storage *PublishedStorage) Remove(path string) error {
 		// try to remove workaround version, but don't care about result
 		_ = storage.Remove(strings.Replace(path, "+", " ", -1))
 	}
+
+	delete(storage.pathCache, path)
+
 	return nil
 }
 
 // RemoveDirs removes directory structure under public path
-func (storage *PublishedStorage) RemoveDirs(path string, progress aptly.Progress) error {
+func (storage *PublishedStorage) RemoveDirs(path string, _ aptly.Progress) error {
 	const page = 1000
 
 	filelist, _, err := storage.internalFilelist(path, false)
@@ -258,6 +262,7 @@ func (storage *PublishedStorage) RemoveDirs(path string, progress aptly.Progress
 			if err != nil {
 				return fmt.Errorf("error deleting path %s from %s: %s", filelist[i], storage, err)
 			}
+			delete(storage.pathCache, filepath.Join(path, filelist[i]))
 		}
 	} else {
 		numParts := (len(filelist) + page - 1) / page
@@ -289,6 +294,9 @@ func (storage *PublishedStorage) RemoveDirs(path string, progress aptly.Progress
 			if err != nil {
 				return fmt.Errorf("error deleting multiple paths from %s: %s", storage, err)
 			}
+			for i := range part {
+				delete(storage.pathCache, filepath.Join(path, part[i]))
+			}
 		}
 	}
 
@@ -297,19 +305,21 @@ func (storage *PublishedStorage) RemoveDirs(path string, progress aptly.Progress
 
 // LinkFromPool links package file from pool to dist's pool location
 //
-// publishedDirectory is desired location in pool (like prefix/pool/component/liba/libav/)
+// publishedPrefix is desired prefix for the location in the pool.
+// publishedRelParh is desired location in pool (like pool/component/liba/libav/)
 // sourcePool is instance of aptly.PackagePool
 // sourcePath is filepath to package file in package pool
 //
 // LinkFromPool returns relative path for the published file to be included in package index
-func (storage *PublishedStorage) LinkFromPool(publishedDirectory, fileName string, sourcePool aptly.PackagePool,
+func (storage *PublishedStorage) LinkFromPool(publishedPrefix, publishedRelPath, fileName string, sourcePool aptly.PackagePool,
 	sourcePath string, sourceChecksums utils.ChecksumInfo, force bool) error {
 
+	publishedDirectory := filepath.Join(publishedPrefix, publishedRelPath)
 	relPath := filepath.Join(publishedDirectory, fileName)
 	poolPath := filepath.Join(storage.prefix, relPath)
 
 	if storage.pathCache == nil {
-		paths, md5s, err := storage.internalFilelist("", true)
+		paths, md5s, err := storage.internalFilelist(filepath.Join(storage.prefix, publishedPrefix, "pool"), true)
 		if err != nil {
 			return errors.Wrap(err, "error caching paths under prefix")
 		}
@@ -488,6 +498,17 @@ func (storage *PublishedStorage) FileExists(path string) (bool, error) {
 		var notFoundErr *types.NotFound
 		if errors.As(err, &notFoundErr) {
 			return false, nil
+		}
+
+		// falback in case the above condidition fails
+		var opErr *smithy.OperationError
+		if errors.As(err, &opErr) {
+			var ae smithy.APIError
+			if errors.As(err, &ae) {
+				if ae.ErrorCode() == "NotFound" {
+					return false, nil
+				}
+			}
 		}
 
 		return false, err

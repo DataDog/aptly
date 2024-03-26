@@ -1,9 +1,7 @@
 package main
 
 import (
-	"math/rand"
 	"os"
-	"time"
 
 	"github.com/DataDog/aptly/aptly"
 	"github.com/DataDog/aptly/cmd"
@@ -21,8 +19,6 @@ func main() {
 	}
 
 	aptly.Version = Version
-
-	rand.Seed(time.Now().UnixNano())
 
 	os.Exit(cmd.Run(cmd.RootCommand(), os.Args[1:], true))
 }

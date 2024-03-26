@@ -16,7 +16,6 @@ import (
 // SigningOptions is a shared between publish API GPG options structure
 type SigningOptions struct {
 	Skip           bool
-	Batch          bool
 	GpgKey         string
 	Keyring        string
 	SecretKeyring  string
@@ -33,7 +32,9 @@ func getSigner(options *SigningOptions) (pgp.Signer, error) {
 	signer.SetKey(options.GpgKey)
 	signer.SetKeyRing(options.Keyring, options.SecretKeyring)
 	signer.SetPassphrase(options.Passphrase, options.PassphraseFile)
-	signer.SetBatch(options.Batch)
+
+	// If Batch is false, GPG will ask for passphrase on stdin, which would block the api process
+	signer.SetBatch(true)
 
 	err := signer.Init()
 	if err != nil {
@@ -339,7 +340,7 @@ func apiPublishUpdateSwitch(c *gin.Context) {
 
 	resources = append(resources, string(published.Key()))
 	taskName := fmt.Sprintf("Update published %s (%s): %s", published.SourceKind, strings.Join(updatedComponents, " "), strings.Join(updatedSnapshots, ", "))
-	maybeRunTaskInBackground(c, taskName, resources, func(out aptly.Progress, detail *task.Detail) (*task.ProcessReturnValue, error) {
+	maybeRunTaskInBackground(c, taskName, resources, func(out aptly.Progress, _ *task.Detail) (*task.ProcessReturnValue, error) {
 		err := published.Publish(context.PackagePool(), context, collectionFactory, signer, out, b.ForceOverwrite)
 		if err != nil {
 			return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("unable to update: %s", err)
@@ -383,7 +384,7 @@ func apiPublishDrop(c *gin.Context) {
 	resources := []string{string(published.Key())}
 
 	taskName := fmt.Sprintf("Delete published %s (%s)", prefix, distribution)
-	maybeRunTaskInBackground(c, taskName, resources, func(out aptly.Progress, detail *task.Detail) (*task.ProcessReturnValue, error) {
+	maybeRunTaskInBackground(c, taskName, resources, func(out aptly.Progress, _ *task.Detail) (*task.ProcessReturnValue, error) {
 		err := collection.Remove(context, storage, prefix, distribution,
 			collectionFactory, out, force, skipCleanup)
 		if err != nil {

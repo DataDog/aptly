@@ -251,7 +251,7 @@ class BaseTest(object):
         return "\n".join(sorted(self.ensure_utf8(output).split("\n")))
 
     def run(self):
-        output = self.run_cmd(self.runCmd, self.expectedCode)
+        output = self.run_cmd(self.runCmd, self.expectedCode).decode("utf-8")
         if self.sortOutput:
             output = self.sort_lines(output)
         self.output = self.output_processor(output)
@@ -296,15 +296,12 @@ class BaseTest(object):
             if is_aptly_command:
                 # remove the last two rows as go tests always print PASS/FAIL and coverage in those
                 # two lines. This would otherwise fail the tests as they would not match gold
-                matches = re.findall(r"((.|\n)*)EXIT: (\d)\n.*\ncoverage: .*", raw_output.decode("utf-8"))
-                if not matches:
+                match = re.search(r"EXIT: (\d)\n.*\n.*coverage: .*", raw_output.decode("utf-8"))
+                if match is None:
                     raise Exception("no matches found in output '%s'" % raw_output.decode("utf-8"))
 
-                output, _, returncode = matches[0]
-
-                output = output.encode()
-                returncodes.append(int(returncode))
-
+                output = match.string[:match.start()].encode()
+                returncodes.append(int(match.group(1)))
             else:
                 output = raw_output
 
@@ -345,7 +342,7 @@ class BaseTest(object):
         try:
             self.verify_match(self.get_gold(), self.output,
                               match_prepare=self.outputMatchPrepare)
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             if self.captureResults:
                 if self.outputMatchPrepare is not None:
                     self.output = self.outputMatchPrepare(self.output)
@@ -355,7 +352,7 @@ class BaseTest(object):
                 raise
 
     def check_cmd_output(self, command, gold_name, match_prepare=None, expected_code=0):
-        output = self.run_cmd(command, expected_code=expected_code)
+        output = self.run_cmd(command, expected_code=expected_code).decode("utf-8")
         try:
             self.verify_match(self.get_gold(gold_name), output, match_prepare)
         except:  # noqa: E722
@@ -442,7 +439,7 @@ class BaseTest(object):
                 diff += "wrong value '%s' for key '%s', expected '%s'\n" % (
                     v, k, b[k])
         if diff:
-            raise Exception("content doesn't match:\n" + diff)
+            raise Exception("content subset doesn't match:\n" + diff)
 
     def ensure_utf8(self, a):
         if isinstance(a, bytes):
