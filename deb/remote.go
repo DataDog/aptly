@@ -15,13 +15,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/ugorji/go/codec"
+
 	"github.com/aptly-dev/aptly/aptly"
 	"github.com/aptly-dev/aptly/database"
 	"github.com/aptly-dev/aptly/http"
 	"github.com/aptly-dev/aptly/pgp"
 	"github.com/aptly-dev/aptly/utils"
-	"github.com/google/uuid"
-	"github.com/ugorji/go/codec"
 )
 
 // RemoteRepo statuses
@@ -360,6 +361,14 @@ func (repo *RemoteRepo) PackageURL(filename string) *url.URL {
 
 // Fetch updates information about repository
 func (repo *RemoteRepo) Fetch(d aptly.Downloader, verifier pgp.Verifier, ignoreSignatures bool) error {
+	return repo.FetchBuffered(nil, d, verifier, ignoreSignatures)
+}
+
+// FetchBuffered updates information about repository, reading new stanzas into the provided one
+func (repo *RemoteRepo) FetchBuffered(stanza Stanza, d aptly.Downloader, verifier pgp.Verifier, ignoreSignatures bool) error {
+	if stanza == nil {
+		stanza = make(Stanza, 32)
+	}
 	var (
 		release, inrelease, releasesig *os.File
 		err                            error
@@ -432,7 +441,7 @@ ok:
 	defer func() { _ = release.Close() }()
 
 	sreader := NewControlFileReader(release, true, false)
-	stanza, err := sreader.ReadStanza()
+	err = sreader.ReadBufferedStanza(stanza)
 	if err != nil {
 		return err
 	}
@@ -504,7 +513,7 @@ ok:
 			repo.ReleaseFiles[parts[2]] = sum
 		}
 
-		delete(stanza, field)
+		stanza.Reset(field)
 
 		return nil
 	}
@@ -623,13 +632,15 @@ func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.
 		}
 
 		sreader := NewControlFileReader(packagesReader, false, isInstaller)
+		stanza := make(Stanza, 32)
 
 		for {
-			stanza, err := sreader.ReadStanza()
+			stanza.Clear()
+			err = sreader.ReadBufferedStanza(stanza)
 			if err != nil {
 				return err
 			}
-			if stanza == nil {
+			if stanza.Empty() {
 				break
 			}
 
@@ -804,6 +815,8 @@ func (repo *RemoteRepo) Encode() []byte {
 	var buf bytes.Buffer
 
 	encoder := codec.NewEncoder(&buf, &codec.MsgpackHandle{})
+
+	repo.Meta.Clean()
 	_ = encoder.Encode(repo)
 
 	return buf.Bytes()

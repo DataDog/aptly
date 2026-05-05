@@ -66,11 +66,11 @@ func StrSliceHasItem(s []string, item string) bool {
 
 // StrMapSortedKeys returns keys of map[string]string sorted
 func StrMapSortedKeys(m map[string]string) []string {
-	keys := make([]string, len(m))
-	i := 0
-	for k := range m {
-		keys[i] = k
-		i++
+	keys := []string{}
+	for k, v := range m {
+		if v != "" {
+			keys = append(keys, k)
+		}
 	}
 	sort.Strings(keys)
 	return keys
