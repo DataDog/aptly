@@ -1,6 +1,6 @@
 module github.com/aptly-dev/aptly
 
-go 1.25.8
+go 1.25.9
 
 toolchain go1.26.2
 
