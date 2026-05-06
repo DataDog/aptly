@@ -90,7 +90,7 @@ lint: prepare
 	# Install golangci-lint
 	@test -f $(BINPATH)/golangci-lint || go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	# Running lint
-	@NO_COLOR=true PATH=$(BINPATH)/:$(PATH) golangci-lint run --max-issues-per-linter=0 --max-same-issues=0
+	@NO_COLOR=true $(BINPATH)/golangci-lint run --max-issues-per-linter=0 --max-same-issues=0
 
 
 build: prepare swagger  ## Build aptly

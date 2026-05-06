@@ -12,7 +12,7 @@ import (
 )
 
 // ConfigStructure is structure of main configuration
-type ConfigStructure struct { // nolint: maligned
+type ConfigStructure struct {
 	// General
 	RootDir              string   `json:"rootDir"                       yaml:"root_dir"`
 	LogLevel             string   `json:"logLevel"                      yaml:"log_level"`
