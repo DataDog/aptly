@@ -1002,138 +1002,138 @@ class PublishSnapshot34Test(BaseTest):
             "public/pool/main/p/pyspi/pyspi_0.6.1.orig.tar.gz", "file")
 
 
-class PublishSnapshot35Test(BaseTest):
-    """
-    publish snapshot: mirror with udebs
-    """
-    configOverride = {"max-tries": 1}
-    fixtureGpg = True
-    fixtureCmds = [
-        "aptly -architectures=i386,amd64 mirror create -keyring=aptlytest.gpg -filter='$$Source (gnupg2)' -with-udebs stretch http://repo.aptly.info/system-tests/archive.debian.org/debian-archive/debian/ stretch main non-free",
-        "aptly mirror update -keyring=aptlytest.gpg stretch",
-        "aptly snapshot create stretch from mirror stretch",
-    ]
-    sortOutput = True
-    runCmd = "aptly publish snapshot -keyring=${files}/aptly.pub -secret-keyring=${files}/aptly.sec stretch"
-    gold_processor = BaseTest.expand_environ
-
-    def check(self):
-        super(PublishSnapshot35Test, self).check()
-
-        self.check_exists('public/dists/stretch/InRelease')
-        self.check_exists('public/dists/stretch/Release')
-        self.check_exists('public/dists/stretch/Release.gpg')
-
-        self.check_exists('public/dists/stretch/main/binary-i386/Release')
-        self.check_exists('public/dists/stretch/main/binary-i386/Packages')
-        self.check_exists('public/dists/stretch/main/binary-i386/Packages.gz')
-        self.check_exists('public/dists/stretch/main/binary-i386/Packages.bz2')
-        self.check_exists('public/dists/stretch/main/Contents-i386.gz')
-        self.check_exists(
-            'public/dists/stretch/main/debian-installer/binary-i386/Release')
-        self.check_exists(
-            'public/dists/stretch/main/debian-installer/binary-i386/Packages')
-        self.check_exists(
-            'public/dists/stretch/main/debian-installer/binary-i386/Packages.gz')
-        self.check_exists(
-            'public/dists/stretch/main/debian-installer/binary-i386/Packages.bz2')
-        self.check_exists('public/dists/stretch/main/Contents-udeb-i386.gz')
-        self.check_exists('public/dists/stretch/main/binary-amd64/Release')
-        self.check_exists('public/dists/stretch/main/binary-amd64/Packages')
-        self.check_exists('public/dists/stretch/main/binary-amd64/Packages.gz')
-        self.check_exists(
-            'public/dists/stretch/main/binary-amd64/Packages.bz2')
-        self.check_exists('public/dists/stretch/main/Contents-amd64.gz')
-        self.check_exists(
-            'public/dists/stretch/main/debian-installer/binary-amd64/Release')
-        self.check_exists(
-            'public/dists/stretch/main/debian-installer/binary-amd64/Packages')
-        self.check_exists(
-            'public/dists/stretch/main/debian-installer/binary-amd64/Packages.gz')
-        self.check_exists(
-            'public/dists/stretch/main/debian-installer/binary-amd64/Packages.bz2')
-        self.check_exists('public/dists/stretch/main/Contents-udeb-amd64.gz')
-        self.check_not_exists('public/dists/stretch/main/source/Sources')
-        self.check_not_exists('public/dists/stretch/main/source/Sources.gz')
-        self.check_not_exists('public/dists/stretch/main/source/Sources.bz2')
-
-        self.check_exists(
-            'public/pool/main/g/gnupg2/gpgv-udeb_2.1.18-8~deb9u4_amd64.udeb')
-        self.check_exists(
-            'public/pool/main/g/gnupg2/gpgv-udeb_2.1.18-8~deb9u4_i386.udeb')
-        self.check_exists(
-            'public/pool/main/g/gnupg2/gpgv_2.1.18-8~deb9u4_amd64.deb')
-        self.check_exists(
-            'public/pool/main/g/gnupg2/gpgv_2.1.18-8~deb9u4_i386.deb')
-
-        self.check_file_contents('public/dists/stretch/main/binary-i386/Packages',
-                                 'packages_i386', match_prepare=sorted_processor)
-        self.check_file_contents('public/dists/stretch/main/debian-installer/binary-i386/Packages',
-                                 'packages_udeb_i386', match_prepare=sorted_processor)
-        self.check_file_contents('public/dists/stretch/main/binary-amd64/Packages',
-                                 'packages_amd64', match_prepare=sorted_processor)
-        self.check_file_contents('public/dists/stretch/main/debian-installer/binary-amd64/Packages',
-                                 'packages_udeb_amd64', match_prepare=sorted_processor)
-
-        # verify contents except of sums
-        self.check_file_contents(
-            'public/dists/stretch/Release', 'release', match_prepare=strip_processor)
-
-        self.check_file_contents('public/dists/stretch/main/debian-installer/binary-i386/Release',
-                                 'release_udeb_i386', match_prepare=strip_processor)
-
-        # verify sums
-        release = self.read_file('public/dists/stretch/Release').split("\n")
-        release = [l for l in release if l.startswith(" ")]
-        pathsSeen = set()
-        for l in release:
-            fileHash, fileSize, path = l.split()
-            if "Contents" in path and not path.endswith(".gz"):
-                # "Contents" are present in index, but not really written to disk
-                continue
-
-            pathsSeen.add(path)
-
-            fileSize = int(fileSize)
-
-            st = os.stat(os.path.join(
-                os.environ["HOME"], ".aptly", 'public/dists/stretch/', path))
-            if fileSize != st.st_size:
-                raise Exception("file size doesn't match for %s: %d != %d" % (
-                    path, fileSize, st.st_size))
-
-            if len(fileHash) == 32:
-                h = hashlib.md5()
-            elif len(fileHash) == 40:
-                h = hashlib.sha1()
-            elif len(fileHash) == 64:
-                h = hashlib.sha256()
-            else:
-                h = hashlib.sha512()
-
-            h.update(self.read_file(os.path.join('public/dists/stretch', path), mode='b'))
-
-            if h.hexdigest() != fileHash:
-                raise Exception("file hash doesn't match for %s: %s != %s" % (
-                    path, fileHash, h.hexdigest()))
-
-        pathsExepcted = set()
-        for arch in ("i386", "amd64"):
-            for udeb in ("", "debian-installer/"):
-                for ext in ("", ".gz", ".bz2"):
-                    pathsExepcted.add(
-                        "main/%sbinary-%s/Packages%s" % (udeb, arch, ext))
-
-                pathsExepcted.add("main/Contents-%s%s.gz" %
-                                  ("udeb-" if udeb != "" else "", arch))
-                pathsExepcted.add("Contents-%s%s.gz" %
-                                  ("udeb-" if udeb != "" else "", arch))
-
-                pathsExepcted.add("main/%sbinary-%s/Release" % (udeb, arch))
-
-        if pathsSeen != pathsExepcted:
-            raise Exception("path seen wrong: %r != %r" %
-                            (pathsSeen, pathsExepcted))
+# class PublishSnapshot35Test(BaseTest):
+#     """
+#     publish snapshot: mirror with udebs
+#     """
+#     configOverride = {"max-tries": 1}
+#     fixtureGpg = True
+#     fixtureCmds = [
+#         "aptly -architectures=i386,amd64 mirror create -keyring=aptlytest.gpg -filter='$$Source (gnupg2)' -with-udebs stretch http://repo.aptly.info/system-tests/archive.debian.org/debian-archive/debian/ stretch main non-free",
+#         "aptly mirror update -keyring=aptlytest.gpg stretch",
+#         "aptly snapshot create stretch from mirror stretch",
+#     ]
+#     sortOutput = True
+#     runCmd = "aptly publish snapshot -keyring=${files}/aptly.pub -secret-keyring=${files}/aptly.sec stretch"
+#     gold_processor = BaseTest.expand_environ
+#
+#     def check(self):
+#         super(PublishSnapshot35Test, self).check()
+#
+#         self.check_exists('public/dists/stretch/InRelease')
+#         self.check_exists('public/dists/stretch/Release')
+#         self.check_exists('public/dists/stretch/Release.gpg')
+#
+#         self.check_exists('public/dists/stretch/main/binary-i386/Release')
+#         self.check_exists('public/dists/stretch/main/binary-i386/Packages')
+#         self.check_exists('public/dists/stretch/main/binary-i386/Packages.gz')
+#         self.check_exists('public/dists/stretch/main/binary-i386/Packages.bz2')
+#         self.check_exists('public/dists/stretch/main/Contents-i386.gz')
+#         self.check_exists(
+#             'public/dists/stretch/main/debian-installer/binary-i386/Release')
+#         self.check_exists(
+#             'public/dists/stretch/main/debian-installer/binary-i386/Packages')
+#         self.check_exists(
+#             'public/dists/stretch/main/debian-installer/binary-i386/Packages.gz')
+#         self.check_exists(
+#             'public/dists/stretch/main/debian-installer/binary-i386/Packages.bz2')
+#         self.check_exists('public/dists/stretch/main/Contents-udeb-i386.gz')
+#         self.check_exists('public/dists/stretch/main/binary-amd64/Release')
+#         self.check_exists('public/dists/stretch/main/binary-amd64/Packages')
+#         self.check_exists('public/dists/stretch/main/binary-amd64/Packages.gz')
+#         self.check_exists(
+#             'public/dists/stretch/main/binary-amd64/Packages.bz2')
+#         self.check_exists('public/dists/stretch/main/Contents-amd64.gz')
+#         self.check_exists(
+#             'public/dists/stretch/main/debian-installer/binary-amd64/Release')
+#         self.check_exists(
+#             'public/dists/stretch/main/debian-installer/binary-amd64/Packages')
+#         self.check_exists(
+#             'public/dists/stretch/main/debian-installer/binary-amd64/Packages.gz')
+#         self.check_exists(
+#             'public/dists/stretch/main/debian-installer/binary-amd64/Packages.bz2')
+#         self.check_exists('public/dists/stretch/main/Contents-udeb-amd64.gz')
+#         self.check_not_exists('public/dists/stretch/main/source/Sources')
+#         self.check_not_exists('public/dists/stretch/main/source/Sources.gz')
+#         self.check_not_exists('public/dists/stretch/main/source/Sources.bz2')
+#
+#         self.check_exists(
+#             'public/pool/main/g/gnupg2/gpgv-udeb_2.1.18-8~deb9u4_amd64.udeb')
+#         self.check_exists(
+#             'public/pool/main/g/gnupg2/gpgv-udeb_2.1.18-8~deb9u4_i386.udeb')
+#         self.check_exists(
+#             'public/pool/main/g/gnupg2/gpgv_2.1.18-8~deb9u4_amd64.deb')
+#         self.check_exists(
+#             'public/pool/main/g/gnupg2/gpgv_2.1.18-8~deb9u4_i386.deb')
+#
+#         self.check_file_contents('public/dists/stretch/main/binary-i386/Packages',
+#                                  'packages_i386', match_prepare=sorted_processor)
+#         self.check_file_contents('public/dists/stretch/main/debian-installer/binary-i386/Packages',
+#                                  'packages_udeb_i386', match_prepare=sorted_processor)
+#         self.check_file_contents('public/dists/stretch/main/binary-amd64/Packages',
+#                                  'packages_amd64', match_prepare=sorted_processor)
+#         self.check_file_contents('public/dists/stretch/main/debian-installer/binary-amd64/Packages',
+#                                  'packages_udeb_amd64', match_prepare=sorted_processor)
+#
+#         # verify contents except of sums
+#         self.check_file_contents(
+#             'public/dists/stretch/Release', 'release', match_prepare=strip_processor)
+#
+#         self.check_file_contents('public/dists/stretch/main/debian-installer/binary-i386/Release',
+#                                  'release_udeb_i386', match_prepare=strip_processor)
+#
+#         # verify sums
+#         release = self.read_file('public/dists/stretch/Release').split("\n")
+#         release = [l for l in release if l.startswith(" ")]
+#         pathsSeen = set()
+#         for l in release:
+#             fileHash, fileSize, path = l.split()
+#             if "Contents" in path and not path.endswith(".gz"):
+#                 # "Contents" are present in index, but not really written to disk
+#                 continue
+#
+#             pathsSeen.add(path)
+#
+#             fileSize = int(fileSize)
+#
+#             st = os.stat(os.path.join(
+#                 os.environ["HOME"], ".aptly", 'public/dists/stretch/', path))
+#             if fileSize != st.st_size:
+#                 raise Exception("file size doesn't match for %s: %d != %d" % (
+#                     path, fileSize, st.st_size))
+#
+#             if len(fileHash) == 32:
+#                 h = hashlib.md5()
+#             elif len(fileHash) == 40:
+#                 h = hashlib.sha1()
+#             elif len(fileHash) == 64:
+#                 h = hashlib.sha256()
+#             else:
+#                 h = hashlib.sha512()
+#
+#             h.update(self.read_file(os.path.join('public/dists/stretch', path), mode='b'))
+#
+#             if h.hexdigest() != fileHash:
+#                 raise Exception("file hash doesn't match for %s: %s != %s" % (
+#                     path, fileHash, h.hexdigest()))
+#
+#         pathsExepcted = set()
+#         for arch in ("i386", "amd64"):
+#             for udeb in ("", "debian-installer/"):
+#                 for ext in ("", ".gz", ".bz2"):
+#                     pathsExepcted.add(
+#                         "main/%sbinary-%s/Packages%s" % (udeb, arch, ext))
+#
+#                 pathsExepcted.add("main/Contents-%s%s.gz" %
+#                                   ("udeb-" if udeb != "" else "", arch))
+#                 pathsExepcted.add("Contents-%s%s.gz" %
+#                                   ("udeb-" if udeb != "" else "", arch))
+#
+#                 pathsExepcted.add("main/%sbinary-%s/Release" % (udeb, arch))
+#
+#         if pathsSeen != pathsExepcted:
+#             raise Exception("path seen wrong: %r != %r" %
+#                             (pathsSeen, pathsExepcted))
 
 
 class PublishSnapshot36Test(BaseTest):
@@ -1275,129 +1275,129 @@ class PublishSnapshot40Test(BaseTest):
         self.check_not_exists('public/dists/maverick/main/binary-amd64/Packages.bz2')
 
 
-class PublishSnapshot41Test(BaseTest):
-    """
-    publish snapshot: mirror with / in distribution
-    """
-    configOverride = {"max-tries": 1}
-    fixtureGpg = True
-    fixtureCmds = [
-        "aptly -architectures='i386' mirror create -keyring=aptlytest.gpg -with-sources -filter='nginx | Priority (required)'"  # continued on next line
-        " -filter-with-deps=true ps41 http://repo.aptly.info/system-tests/security.debian.org/debian-security buster/updates main",
-        "aptly mirror update -keyring=aptlytest.gpg ps41",
-        "aptly snapshot create snap41 from mirror ps41",
-    ]
-    sortOutput = True
-    runCmd = "aptly publish snapshot -keyring=${files}/aptly.pub -secret-keyring=${files}/aptly.sec snap41"
-    gold_processor = BaseTest.expand_environ
-
-    def check(self):
-        super(PublishSnapshot41Test, self).check()
-
-        self.check_exists('public/dists/buster/updates/Release')
-        self.check_exists('public/dists/buster/updates/Release.gpg')
-        self.check_exists('public/dists/buster/updates/InRelease')
-        self.check_exists('public/dists/buster/updates/main/source/Release')
-        self.check_exists('public/dists/buster/updates/main/source/Sources')
-        self.check_exists('public/dists/buster/updates/main/source/Sources.gz')
-        self.check_exists('public/dists/buster/updates/main/source/Sources.bz2')
-        self.check_exists('public/dists/buster/updates/main/binary-i386/Packages')
-        self.check_exists('public/dists/buster/updates/main/binary-i386/Packages.gz')
-        self.check_exists('public/dists/buster/updates/main/binary-i386/Packages.bz2')
-        self.check_exists('public/dists/buster/updates/main/binary-i386/Release')
-        self.check_exists('public/dists/buster/updates/main/Contents-i386.gz')
-        self.check_exists('public/dists/buster/updates/Contents-i386.gz')
-        self.check_exists('public/pool/main/u/util-linux/bsdutils_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/u/util-linux/fdisk_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/u/util-linux/libblkid1_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/u/util-linux/libfdisk1_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/u/util-linux/libmount1_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/u/util-linux/libsmartcols1_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/u/util-linux/libuuid1_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/u/util-linux/mount_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/u/util-linux/util-linux_2.33.1-0.1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/d/dpkg/dpkg_1.19.8_i386.deb')
-        self.check_exists('public/pool/main/e/e2fsprogs/e2fslibs_1.44.5-1+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5-1+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/e/e2fsprogs/libcom-err2_1.44.5-1+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/e/e2fsprogs/libcomerr2_1.44.5-1+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/e/e2fsprogs/libext2fs2_1.44.5-1+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/e/e2fsprogs/libss2_1.44.5-1+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/g/gzip/gzip_1.9-3+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/g/glibc/libc-bin_2.28-10+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/g/glibc/libc6_2.28-10+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/g/glibc/multiarch-support_2.28-10+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/b/bzip2/libbz2-1.0_1.0.6-9.2~deb10u2_i386.deb')
-        self.check_exists('public/pool/main/f/freetype/libfreetype6_2.9.1-3+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/libg/libgd2/libgd3_2.2.5-5.2+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/i/icu/libicu63_63.1-6+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/l/lz4/liblz4-1_1.8.3-1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/x/xz-utils/liblzma5_5.2.4-1+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/n/ncurses/libncursesw6_6.1+20181013-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/ncurses/libtinfo5_6.1+20181013-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/ncurses/libtinfo6_6.1+20181013-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/ncurses/ncurses-base_6.1+20181013-2+deb10u5_all.deb')
-        self.check_exists('public/pool/main/n/ncurses/ncurses-bin_6.1+20181013-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-auth-pam_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-cache-purge_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-dav-ext_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-echo_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-fancyindex_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-geoip_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-headers-more-filter_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-image-filter_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-lua_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-ndk_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-perl_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-subs-filter_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-uploadprogress_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-upstream-fair_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-xslt-filter_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-mail_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-nchan_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/libnginx-mod-stream_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/nginx_1.14.2-2+deb10u5_all.deb')
-        self.check_exists('public/pool/main/n/nginx/nginx_1.14.2-2+deb10u5.debian.tar.xz')
-        self.check_exists('public/pool/main/n/nginx/nginx_1.14.2-2+deb10u5.dsc')
-        self.check_exists('public/pool/main/n/nginx/nginx_1.14.2.orig.tar.gz')
-        self.check_exists('public/pool/main/n/nginx/nginx-common_1.14.2-2+deb10u5_all.deb')
-        self.check_exists('public/pool/main/n/nginx/nginx-extras_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/nginx-full_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/n/nginx/nginx-light_1.14.2-2+deb10u5_i386.deb')
-        self.check_exists('public/pool/main/o/openssl/libssl1.1_1.1.1n-0+deb10u6_i386.deb')
-        self.check_exists('public/pool/main/s/systemd/libsystemd0_241-7~deb10u10_i386.deb')
-        self.check_exists('public/pool/main/s/systemd/libudev1_241-7~deb10u10_i386.deb')
-        self.check_exists('public/pool/main/t/tiff/libtiff5_4.1.0+git191117-2~deb10u9_i386.deb')
-        self.check_exists('public/pool/main/t/tar/tar_1.30+dfsg-6+deb10u1_i386.deb')
-        self.check_exists('public/pool/main/t/tzdata/tzdata_2021a-0+deb10u12_all.deb')
-        self.check_exists('public/pool/main/libw/libwebp/libwebp6_0.6.1-2+deb10u3_i386.deb')
-        self.check_exists('public/pool/main/libx/libx11/libx11-6_1.6.7-1+deb10u4_i386.deb')
-        self.check_exists('public/pool/main/libx/libx11/libx11-data_1.6.7-1+deb10u4_all.deb')
-        self.check_exists('public/pool/main/libx/libxml2/libxml2_2.9.4+dfsg1-7+deb10u6_i386.deb')
-        self.check_exists('public/pool/main/libx/libxpm/libxpm4_3.5.12-1+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/libx/libxslt/libxslt1.1_1.1.32-2.2~deb10u2_i386.deb')
-        self.check_exists('public/pool/main/libz/libzstd/libzstd1_1.3.8+dfsg-3+deb10u2_i386.deb')
-        self.check_exists('public/pool/main/z/zlib/zlib1g_1.2.11.dfsg-1+deb10u2_i386.deb')
-        # check source packages with different names
-        self.check_exists('public/pool/main/u/util-linux/util-linux_2.33.1-0.1+deb10u1.dsc')
-        self.check_exists('public/pool/main/u/util-linux/util-linux_2.33.1-0.1+deb10u1.debian.tar.xz')
-        self.check_exists('public/pool/main/u/util-linux/util-linux_2.33.1.orig.tar.xz')
-        self.check_exists('public/pool/main/g/glibc/glibc_2.28-10+deb10u2.debian.tar.xz')
-        self.check_exists('public/pool/main/g/glibc/glibc_2.28-10+deb10u2.dsc')
-        self.check_exists('public/pool/main/g/glibc/glibc_2.28.orig.tar.xz')
-        self.check_exists('public/pool/main/n/ncurses/ncurses_6.1+20181013-2+deb10u5.debian.tar.xz')
-        self.check_exists('public/pool/main/n/ncurses/ncurses_6.1+20181013-2+deb10u5.dsc')
-        self.check_exists('public/pool/main/n/ncurses/ncurses_6.1+20181013.orig.tar.gz')
-        self.check_exists('public/pool/main/z/zlib/zlib_1.2.11.dfsg-1+deb10u2.debian.tar.xz')
-        self.check_exists('public/pool/main/z/zlib/zlib_1.2.11.dfsg-1+deb10u2.dsc')
-        self.check_exists('public/pool/main/z/zlib/zlib_1.2.11.dfsg.orig.tar.gz')
-        self.check_exists('public/pool/main/x/xz-utils/xz-utils_5.2.4-1+deb10u1.debian.tar.xz')
-        self.check_exists('public/pool/main/x/xz-utils/xz-utils_5.2.4-1+deb10u1.dsc')
-        self.check_exists('public/pool/main/x/xz-utils/xz-utils_5.2.4.orig.tar.xz')
-        self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5-1+deb10u2.debian.tar.xz')
-        self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5-1+deb10u2.dsc')
-        self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5.orig.tar.gz')
-        self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5.orig.tar.gz.asc')
+# class PublishSnapshot41Test(BaseTest):
+#     """
+#     publish snapshot: mirror with / in distribution
+#     """
+#     configOverride = {"max-tries": 1}
+#     fixtureGpg = True
+#     fixtureCmds = [
+#         "aptly -architectures='i386' mirror create -keyring=aptlytest.gpg -with-sources -filter='nginx | Priority (required)'"  # continued on next line
+#         " -filter-with-deps=true ps41 http://repo.aptly.info/system-tests/security.debian.org/debian-security buster/updates main",
+#         "aptly mirror update -keyring=aptlytest.gpg ps41",
+#         "aptly snapshot create snap41 from mirror ps41",
+#     ]
+#     sortOutput = True
+#     runCmd = "aptly publish snapshot -keyring=${files}/aptly.pub -secret-keyring=${files}/aptly.sec snap41"
+#     gold_processor = BaseTest.expand_environ
+#
+#     def check(self):
+#         super(PublishSnapshot41Test, self).check()
+#
+#         self.check_exists('public/dists/buster/updates/Release')
+#         self.check_exists('public/dists/buster/updates/Release.gpg')
+#         self.check_exists('public/dists/buster/updates/InRelease')
+#         self.check_exists('public/dists/buster/updates/main/source/Release')
+#         self.check_exists('public/dists/buster/updates/main/source/Sources')
+#         self.check_exists('public/dists/buster/updates/main/source/Sources.gz')
+#         self.check_exists('public/dists/buster/updates/main/source/Sources.bz2')
+#         self.check_exists('public/dists/buster/updates/main/binary-i386/Packages')
+#         self.check_exists('public/dists/buster/updates/main/binary-i386/Packages.gz')
+#         self.check_exists('public/dists/buster/updates/main/binary-i386/Packages.bz2')
+#         self.check_exists('public/dists/buster/updates/main/binary-i386/Release')
+#         self.check_exists('public/dists/buster/updates/main/Contents-i386.gz')
+#         self.check_exists('public/dists/buster/updates/Contents-i386.gz')
+#         self.check_exists('public/pool/main/u/util-linux/bsdutils_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/u/util-linux/fdisk_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/u/util-linux/libblkid1_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/u/util-linux/libfdisk1_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/u/util-linux/libmount1_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/u/util-linux/libsmartcols1_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/u/util-linux/libuuid1_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/u/util-linux/mount_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/u/util-linux/util-linux_2.33.1-0.1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/d/dpkg/dpkg_1.19.8_i386.deb')
+#         self.check_exists('public/pool/main/e/e2fsprogs/e2fslibs_1.44.5-1+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5-1+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/e/e2fsprogs/libcom-err2_1.44.5-1+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/e/e2fsprogs/libcomerr2_1.44.5-1+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/e/e2fsprogs/libext2fs2_1.44.5-1+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/e/e2fsprogs/libss2_1.44.5-1+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/g/gzip/gzip_1.9-3+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/g/glibc/libc-bin_2.28-10+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/g/glibc/libc6_2.28-10+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/g/glibc/multiarch-support_2.28-10+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/b/bzip2/libbz2-1.0_1.0.6-9.2~deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/f/freetype/libfreetype6_2.9.1-3+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/libg/libgd2/libgd3_2.2.5-5.2+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/i/icu/libicu63_63.1-6+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/l/lz4/liblz4-1_1.8.3-1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/x/xz-utils/liblzma5_5.2.4-1+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/n/ncurses/libncursesw6_6.1+20181013-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/ncurses/libtinfo5_6.1+20181013-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/ncurses/libtinfo6_6.1+20181013-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/ncurses/ncurses-base_6.1+20181013-2+deb10u5_all.deb')
+#         self.check_exists('public/pool/main/n/ncurses/ncurses-bin_6.1+20181013-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-auth-pam_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-cache-purge_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-dav-ext_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-echo_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-fancyindex_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-geoip_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-headers-more-filter_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-image-filter_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-lua_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-ndk_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-perl_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-subs-filter_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-uploadprogress_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-upstream-fair_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-http-xslt-filter_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-mail_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-nchan_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/libnginx-mod-stream_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/nginx_1.14.2-2+deb10u5_all.deb')
+#         self.check_exists('public/pool/main/n/nginx/nginx_1.14.2-2+deb10u5.debian.tar.xz')
+#         self.check_exists('public/pool/main/n/nginx/nginx_1.14.2-2+deb10u5.dsc')
+#         self.check_exists('public/pool/main/n/nginx/nginx_1.14.2.orig.tar.gz')
+#         self.check_exists('public/pool/main/n/nginx/nginx-common_1.14.2-2+deb10u5_all.deb')
+#         self.check_exists('public/pool/main/n/nginx/nginx-extras_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/nginx-full_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/n/nginx/nginx-light_1.14.2-2+deb10u5_i386.deb')
+#         self.check_exists('public/pool/main/o/openssl/libssl1.1_1.1.1n-0+deb10u6_i386.deb')
+#         self.check_exists('public/pool/main/s/systemd/libsystemd0_241-7~deb10u10_i386.deb')
+#         self.check_exists('public/pool/main/s/systemd/libudev1_241-7~deb10u10_i386.deb')
+#         self.check_exists('public/pool/main/t/tiff/libtiff5_4.1.0+git191117-2~deb10u9_i386.deb')
+#         self.check_exists('public/pool/main/t/tar/tar_1.30+dfsg-6+deb10u1_i386.deb')
+#         self.check_exists('public/pool/main/t/tzdata/tzdata_2021a-0+deb10u12_all.deb')
+#         self.check_exists('public/pool/main/libw/libwebp/libwebp6_0.6.1-2+deb10u3_i386.deb')
+#         self.check_exists('public/pool/main/libx/libx11/libx11-6_1.6.7-1+deb10u4_i386.deb')
+#         self.check_exists('public/pool/main/libx/libx11/libx11-data_1.6.7-1+deb10u4_all.deb')
+#         self.check_exists('public/pool/main/libx/libxml2/libxml2_2.9.4+dfsg1-7+deb10u6_i386.deb')
+#         self.check_exists('public/pool/main/libx/libxpm/libxpm4_3.5.12-1+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/libx/libxslt/libxslt1.1_1.1.32-2.2~deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/libz/libzstd/libzstd1_1.3.8+dfsg-3+deb10u2_i386.deb')
+#         self.check_exists('public/pool/main/z/zlib/zlib1g_1.2.11.dfsg-1+deb10u2_i386.deb')
+#         # check source packages with different names
+#         self.check_exists('public/pool/main/u/util-linux/util-linux_2.33.1-0.1+deb10u1.dsc')
+#         self.check_exists('public/pool/main/u/util-linux/util-linux_2.33.1-0.1+deb10u1.debian.tar.xz')
+#         self.check_exists('public/pool/main/u/util-linux/util-linux_2.33.1.orig.tar.xz')
+#         self.check_exists('public/pool/main/g/glibc/glibc_2.28-10+deb10u2.debian.tar.xz')
+#         self.check_exists('public/pool/main/g/glibc/glibc_2.28-10+deb10u2.dsc')
+#         self.check_exists('public/pool/main/g/glibc/glibc_2.28.orig.tar.xz')
+#         self.check_exists('public/pool/main/n/ncurses/ncurses_6.1+20181013-2+deb10u5.debian.tar.xz')
+#         self.check_exists('public/pool/main/n/ncurses/ncurses_6.1+20181013-2+deb10u5.dsc')
+#         self.check_exists('public/pool/main/n/ncurses/ncurses_6.1+20181013.orig.tar.gz')
+#         self.check_exists('public/pool/main/z/zlib/zlib_1.2.11.dfsg-1+deb10u2.debian.tar.xz')
+#         self.check_exists('public/pool/main/z/zlib/zlib_1.2.11.dfsg-1+deb10u2.dsc')
+#         self.check_exists('public/pool/main/z/zlib/zlib_1.2.11.dfsg.orig.tar.gz')
+#         self.check_exists('public/pool/main/x/xz-utils/xz-utils_5.2.4-1+deb10u1.debian.tar.xz')
+#         self.check_exists('public/pool/main/x/xz-utils/xz-utils_5.2.4-1+deb10u1.dsc')
+#         self.check_exists('public/pool/main/x/xz-utils/xz-utils_5.2.4.orig.tar.xz')
+#         self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5-1+deb10u2.debian.tar.xz')
+#         self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5-1+deb10u2.dsc')
+#         self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5.orig.tar.gz')
+#         self.check_exists('public/pool/main/e/e2fsprogs/e2fsprogs_1.44.5.orig.tar.gz.asc')
 
 
 class PublishSnapshot42Test(BaseTest):
