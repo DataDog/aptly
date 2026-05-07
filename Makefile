@@ -2,10 +2,11 @@ GOPATH=$(shell go env GOPATH)
 VERSION=$(shell make -s version)
 PYTHON?=python3
 BINPATH?=$(GOPATH)/bin
-GOLANGCI_LINT_VERSION=v2.0.2  # version supporting go 1.24
+GOLANGCI_LINT_VERSION=v2.12.2
 COVERAGE_DIR?=$(shell mktemp -d)
 GOOS=$(shell go env GOHOSTOS)
 GOARCH=$(shell go env GOHOSTARCH)
+GOTOOLCHAIN=go1.26.2+auto
 
 export PODMAN_USERNS = keep-id
 DOCKER_RUN = docker run --security-opt label=disable --user 0:0 --rm -v ${PWD}:/work/src
@@ -90,7 +91,7 @@ lint: prepare
 	# Install golangci-lint
 	@test -f $(BINPATH)/golangci-lint || go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	# Running lint
-	@NO_COLOR=true PATH=$(BINPATH)/:$(PATH) golangci-lint run --max-issues-per-linter=0 --max-same-issues=0
+	@NO_COLOR=true $(BINPATH)/golangci-lint run --max-issues-per-linter=0 --max-same-issues=0
 
 
 build: prepare swagger  ## Build aptly
@@ -107,7 +108,7 @@ test: prepare swagger etcd-install  ## Run unit tests (add TEST=regex to specify
 	@echo "\e[33m\e[1mStarting etcd ...\e[0m"
 	@mkdir -p /tmp/aptly-etcd-data; system/t13_etcd/start-etcd.sh > /tmp/aptly-etcd-data/etcd.log 2>&1 &
 	@echo "\e[33m\e[1mRunning go test ...\e[0m"
-	faketime "$(TEST_FAKETIME)" go test -v ./... -gocheck.v=true -check.f "$(TEST)" -coverprofile=unit.out; echo $$? > .unit-test.ret
+	GOTOOLCHAIN=$(GOTOOLCHAIN) faketime "$(TEST_FAKETIME)" go test -v ./... -gocheck.v=true -check.f "$(TEST)" -coverprofile=unit.out; echo $$? > .unit-test.ret
 	@echo "\e[33m\e[1mStopping etcd ...\e[0m"
 	@pid=`cat /tmp/etcd.pid`; kill $$pid
 	@rm -f /tmp/aptly-etcd-data/etcd.log
@@ -115,7 +116,7 @@ test: prepare swagger etcd-install  ## Run unit tests (add TEST=regex to specify
 
 system-test: prepare swagger etcd-install  ## Run system tests
 	# build coverage binary
-	go test -v $(COVERAGE_ARG_BUILD) -c -tags testruncli
+	GOTOOLCHAIN=$(GOTOOLCHAIN) go test -v $(COVERAGE_ARG_BUILD) -c -tags testruncli
 	# Download fixture-db, fixture-pool, etcd.db
 	if [ ! -e ~/aptly-fixture-db ]; then git clone https://github.com/aptly-dev/aptly-fixture-db.git ~/aptly-fixture-db/; fi
 	if [ ! -e ~/aptly-fixture-pool ]; then git clone https://github.com/aptly-dev/aptly-fixture-pool.git ~/aptly-fixture-pool/; fi
@@ -125,7 +126,7 @@ system-test: prepare swagger etcd-install  ## Run system tests
 
 bench:
 	@echo "\e[33m\e[1mRunning benchmark ...\e[0m"
-	go test -v ./deb -run=nothing -bench=. -benchmem
+	GOTOOLCHAIN=$(GOTOOLCHAIN) go test -v ./deb -run=nothing -bench=. -benchmem
 
 serve: prepare swagger-install  ## Run development server (auto recompiling)
 	test -f $(BINPATH)/air || go install github.com/air-verse/air@v1.52.3

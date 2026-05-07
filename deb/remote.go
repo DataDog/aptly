@@ -829,7 +829,7 @@ func (repo *RemoteRepo) Decode(input []byte) error {
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "codec.decoder: readContainerLen: Unrecognized descriptor byte: hex: 80") {
 			// probably it is broken DB from go < 1.2, try decoding w/o time.Time
-			var repo11 struct { // nolint: maligned
+			var repo11 struct {
 				UUID             string
 				Name             string
 				ArchiveRoot      string
