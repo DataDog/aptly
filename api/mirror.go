@@ -1,6 +1,7 @@
 package api
 
 import (
+	gocontext "context"
 	"fmt"
 	"net/http"
 	"os"
@@ -567,9 +568,9 @@ func apiMirrorsUpdate(c *gin.Context) {
 
 	resources := []string{string(remote.Key())}
 	maybeRunTaskInBackground(c, "Update mirror "+b.Name, resources, func(out aptly.Progress, detail *task.Detail) (*task.ProcessReturnValue, error) {
-
+		ctx := gocontext.Background()
 		downloader := context.NewDownloader(out)
-		err := remote.Fetch(c.Request.Context(), downloader, verifier, b.IgnoreSignatures)
+		err := remote.Fetch(ctx, downloader, verifier, b.IgnoreSignatures)
 		if err != nil {
 			return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("unable to update: %s", err)
 		}
@@ -581,13 +582,13 @@ func apiMirrorsUpdate(c *gin.Context) {
 			}
 		}
 
-		err = remote.DownloadPackageIndexes(c.Request.Context(), out, downloader, verifier, collectionFactory, b.IgnoreSignatures, remote.SkipComponentCheck)
+		err = remote.DownloadPackageIndexes(ctx, out, downloader, verifier, collectionFactory, b.IgnoreSignatures, remote.SkipComponentCheck)
 		if err != nil {
 			return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("unable to update: %s", err)
 		}
 
 		if remote.DownloadAppStream && !remote.IsFlat() {
-			err = remote.DownloadAppStreamFiles(c.Request.Context(), out, downloader,
+			err = remote.DownloadAppStreamFiles(ctx, out, downloader,
 				context.PackagePool(), collectionFactory.ChecksumCollection(nil), b.IgnoreChecksums)
 			if err != nil {
 				return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("unable to update: %s", err)
