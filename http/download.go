@@ -13,11 +13,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aptly-dev/aptly/aptly"
-	"github.com/aptly-dev/aptly/utils"
 	"github.com/mxk/go-flowrate/flowrate"
 	"github.com/pkg/errors"
 	"github.com/smira/go-ftp-protocol/protocol"
+
+	"github.com/aptly-dev/aptly/aptly"
+	"github.com/aptly-dev/aptly/utils"
 )
 
 // Check interface
@@ -90,10 +91,13 @@ func (downloader *downloaderImpl) GetLength(ctx context.Context, url string) (in
 	var resp *http.Response
 
 	maxTries := downloader.maxTries
-	for maxTries > 0 {
+	for {
 		resp, err = downloader.client.Do(req)
 		if err != nil && retryableError(err) {
 			maxTries--
+			if maxTries <= 0 {
+				break
+			}
 		} else {
 			// stop retrying
 			break
@@ -103,6 +107,7 @@ func (downloader *downloaderImpl) GetLength(ctx context.Context, url string) (in
 	if err != nil {
 		return -1, errors.Wrap(err, url)
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return -1, &Error{Code: resp.StatusCode, URL: url}

@@ -1,17 +1,19 @@
 package cmd
 
 import (
+	gocontext "context"
 	"fmt"
 	"os"
 	"strings"
 	"sync"
 
+	"github.com/smira/commander"
+	"github.com/smira/flag"
+
 	"github.com/aptly-dev/aptly/aptly"
 	"github.com/aptly-dev/aptly/deb"
 	"github.com/aptly-dev/aptly/query"
 	"github.com/aptly-dev/aptly/utils"
-	"github.com/smira/commander"
-	"github.com/smira/flag"
 )
 
 func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
@@ -20,6 +22,7 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 		cmd.Usage()
 		return commander.ErrCommandError
 	}
+	ctx := gocontext.Background()
 
 	name := args[0]
 
@@ -53,20 +56,20 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 		return fmt.Errorf("unable to initialize GPG verifier: %s", err)
 	}
 
-	err = repo.Fetch(context.Downloader(), verifier, ignoreSignatures)
+	err = repo.Fetch(ctx, context.Downloader(), verifier, ignoreSignatures)
 	if err != nil {
 		return fmt.Errorf("unable to update: %s", err)
 	}
 
 	context.Progress().Printf("Downloading & parsing package files...\n")
-	err = repo.DownloadPackageIndexes(context.Progress(), context.Downloader(), verifier, collectionFactory, ignoreSignatures, ignoreChecksums)
+	err = repo.DownloadPackageIndexes(ctx, context.Progress(), context.Downloader(), verifier, collectionFactory, ignoreSignatures, ignoreChecksums)
 	if err != nil {
 		return fmt.Errorf("unable to update: %s", err)
 	}
 
 	if repo.DownloadAppStream && !repo.IsFlat() {
 		context.Progress().Printf("Downloading AppStream metadata...\n")
-		err = repo.DownloadAppStreamFiles(context.Progress(), context.Downloader(),
+		err = repo.DownloadAppStreamFiles(ctx, context.Progress(), context.Downloader(),
 			context.PackagePool(), collectionFactory.ChecksumCollection(nil), ignoreChecksums)
 		if err != nil {
 			return fmt.Errorf("unable to update: %s", err)

@@ -1,16 +1,17 @@
 package deb
 
 import (
-	gocontext "context"
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/aptly-dev/aptly/aptly"
 	"github.com/aptly-dev/aptly/utils"
-	"github.com/rs/zerolog/log"
 )
 
 // Package is single instance of Debian package
@@ -188,7 +189,7 @@ func NewUdebPackageFromControlFile(input Stanza) *Package {
 }
 
 // NewInstallerPackageFromControlFile creates a dummy installer Package from parsed hash sum file
-func NewInstallerPackageFromControlFile(input Stanza, repo *RemoteRepo, component, architecture string, d aptly.Downloader) (*Package, error) {
+func NewInstallerPackageFromControlFile(ctx context.Context, input Stanza, repo *RemoteRepo, component, architecture string, d aptly.Downloader) (*Package, error) {
 	p := &Package{
 		Name:         "installer",
 		Architecture: architecture,
@@ -215,7 +216,7 @@ func NewInstallerPackageFromControlFile(input Stanza, repo *RemoteRepo, componen
 
 		url := repo.PackageURL(files[i].DownloadURL()).String()
 		var size int64
-		size, err = d.GetLength(gocontext.TODO(), url)
+		size, err = d.GetLength(ctx, url)
 		if err != nil {
 			return nil, err
 		}
