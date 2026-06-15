@@ -167,7 +167,7 @@ func (d *GrabDownloader) GetLength(ctx context.Context, url string) (int64, erro
 	if err != nil {
 		return -1, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return -1, &Error{Code: resp.StatusCode, URL: url}
