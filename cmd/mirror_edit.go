@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	gocontext "context"
 	"fmt"
+
+	"github.com/smira/commander"
+	"github.com/smira/flag"
 
 	"github.com/aptly-dev/aptly/pgp"
 	"github.com/aptly-dev/aptly/query"
-	"github.com/smira/commander"
-	"github.com/smira/flag"
 )
 
 func aptlyMirrorEdit(cmd *commander.Command, args []string) error {
@@ -78,7 +80,7 @@ func aptlyMirrorEdit(cmd *commander.Command, args []string) error {
 			return fmt.Errorf("unable to initialize GPG verifier: %s", err)
 		}
 
-		err = repo.Fetch(context.Downloader(), verifier, ignoreSignatures)
+		err = repo.Fetch(gocontext.Background(), context.Downloader(), verifier, ignoreSignatures)
 		if err != nil {
 			return fmt.Errorf("unable to edit: %s", err)
 		}
