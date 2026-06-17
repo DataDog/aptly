@@ -140,9 +140,10 @@ jobs:
 
       - name: Upload coverage to Datadog
         if: github.actor != 'dependabot[bot]'
+        continue-on-error: true
         env:
           DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-        run: npx --yes @datadog/datadog-ci coverage upload --service aptly coverage.txt
+        run: npx --yes @datadog/datadog-ci coverage upload coverage.txt
 
 
   ci-debian-build:
