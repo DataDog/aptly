@@ -2,6 +2,7 @@ package deb
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -65,7 +66,7 @@ func (s *PackageSuite) TestNewInstallerFromPara(c *C) {
 	downloader.ExpectResponse("http://example.com/debian/dists/squeeze/main/installer-i386/current/images/udeb.list", "udeb.list")
 	downloader.ExpectResponse("", "udeb.list")
 	stanza, _ := NewControlFileReader(bytes.NewBufferString(installerPackageMeta), false, true).ReadStanza()
-	p, err := NewInstallerPackageFromControlFile(stanza, repo, "main", "i386", downloader)
+	p, err := NewInstallerPackageFromControlFile(context.Background(), stanza, repo, "main", "i386", downloader)
 	c.Check(err, IsNil)
 
 	c.Check(p.IsSource, Equals, false)

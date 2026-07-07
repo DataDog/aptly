@@ -13,9 +13,10 @@ import (
 
 	"golang.org/x/time/rate"
 
-	"github.com/aptly-dev/aptly/utils"
 	grab "github.com/cavaliergopher/grab/v3"
 	"github.com/pkg/errors"
+
+	"github.com/aptly-dev/aptly/utils"
 
 	"github.com/aptly-dev/aptly/aptly"
 )
@@ -113,7 +114,7 @@ func (d *GrabDownloader) maybeSetupChecksum(req *grab.Request, expected *utils.C
 	return nil
 }
 
-func (d *GrabDownloader) download(_ context.Context, url string, destination string, expected *utils.ChecksumInfo, ignoreMismatch bool) error {
+func (d *GrabDownloader) download(ctx context.Context, url string, destination string, expected *utils.ChecksumInfo, ignoreMismatch bool) error {
 	d.log("Downloading: %s\n", url)
 
 	req, err := grab.NewRequest(destination, url)
@@ -121,6 +122,7 @@ func (d *GrabDownloader) download(_ context.Context, url string, destination str
 		d.log("Error creating new request: %v\n", err)
 		return errors.Wrap(err, url)
 	}
+	req = req.WithContext(ctx)
 	if d.downLimit > 0 {
 		req.RateLimiter = rate.NewLimiter(rate.Limit(d.downLimit), int(d.downLimit))
 	}
@@ -156,11 +158,16 @@ func (d *GrabDownloader) GetProgress() aptly.Progress {
 	return d.progress
 }
 
-func (d *GrabDownloader) GetLength(_ context.Context, url string) (int64, error) {
-	resp, err := http.Head(url)
+func (d *GrabDownloader) GetLength(ctx context.Context, url string) (int64, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
 		return -1, err
 	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return -1, err
+	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return -1, &Error{Code: resp.StatusCode, URL: url}

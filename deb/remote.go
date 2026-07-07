@@ -2,7 +2,7 @@ package deb
 
 import (
 	"bytes"
-	gocontext "context"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -290,7 +290,7 @@ func (repo *RemoteRepo) AppStreamPaths(component string) []string {
 }
 
 // DownloadAppStreamFiles downloads AppStream (DEP-11) metadata files and imports them into the pool
-func (repo *RemoteRepo) DownloadAppStreamFiles(progress aptly.Progress, d aptly.Downloader,
+func (repo *RemoteRepo) DownloadAppStreamFiles(ctx context.Context, progress aptly.Progress, d aptly.Downloader,
 	packagePool aptly.PackagePool, checksumStorage aptly.ChecksumStorage, ignoreChecksums bool) error {
 
 	repo.AppStreamFiles = make(map[string]string)
@@ -325,7 +325,7 @@ func (repo *RemoteRepo) DownloadAppStreamFiles(progress aptly.Progress, d aptly.
 				expected = &info
 			}
 
-			err = d.DownloadWithChecksum(gocontext.TODO(), url, tempPath, expected, ignoreChecksums)
+			err = d.DownloadWithChecksum(ctx, url, tempPath, expected, ignoreChecksums)
 			if err != nil {
 				_ = os.RemoveAll(tempDir)
 				// Skip files that are not found (some repos list dep11 files but don't serve them)
@@ -360,12 +360,12 @@ func (repo *RemoteRepo) PackageURL(filename string) *url.URL {
 }
 
 // Fetch updates information about repository
-func (repo *RemoteRepo) Fetch(d aptly.Downloader, verifier pgp.Verifier, ignoreSignatures bool) error {
-	return repo.FetchBuffered(nil, d, verifier, ignoreSignatures)
+func (repo *RemoteRepo) Fetch(ctx context.Context, d aptly.Downloader, verifier pgp.Verifier, ignoreSignatures bool) error {
+	return repo.FetchBuffered(ctx, nil, d, verifier, ignoreSignatures)
 }
 
 // FetchBuffered updates information about repository, reading new stanzas into the provided one
-func (repo *RemoteRepo) FetchBuffered(stanza Stanza, d aptly.Downloader, verifier pgp.Verifier, ignoreSignatures bool) error {
+func (repo *RemoteRepo) FetchBuffered(ctx context.Context, stanza Stanza, d aptly.Downloader, verifier pgp.Verifier, ignoreSignatures bool) error {
 	if stanza == nil {
 		stanza = make(Stanza, 32)
 	}
@@ -376,10 +376,10 @@ func (repo *RemoteRepo) FetchBuffered(stanza Stanza, d aptly.Downloader, verifie
 
 	if ignoreSignatures {
 		// 0. Just download release file to temporary URL
-		release, err = http.DownloadTemp(gocontext.TODO(), d, repo.ReleaseURL("Release").String())
+		release, err = http.DownloadTemp(ctx, d, repo.ReleaseURL("Release").String())
 		if err != nil {
 			// 0.1 try downloading InRelease, ignore and strip signature
-			inrelease, err = http.DownloadTemp(gocontext.TODO(), d, repo.ReleaseURL("InRelease").String())
+			inrelease, err = http.DownloadTemp(ctx, d, repo.ReleaseURL("InRelease").String())
 			if err != nil {
 				return err
 			}
@@ -394,7 +394,7 @@ func (repo *RemoteRepo) FetchBuffered(stanza Stanza, d aptly.Downloader, verifie
 		}
 	} else {
 		// 1. try InRelease file
-		inrelease, err = http.DownloadTemp(gocontext.TODO(), d, repo.ReleaseURL("InRelease").String())
+		inrelease, err = http.DownloadTemp(ctx, d, repo.ReleaseURL("InRelease").String())
 		if err != nil {
 			goto splitsignature
 		}
@@ -416,12 +416,12 @@ func (repo *RemoteRepo) FetchBuffered(stanza Stanza, d aptly.Downloader, verifie
 
 	splitsignature:
 		// 2. try Release + Release.gpg
-		release, err = http.DownloadTemp(gocontext.TODO(), d, repo.ReleaseURL("Release").String())
+		release, err = http.DownloadTemp(ctx, d, repo.ReleaseURL("Release").String())
 		if err != nil {
 			return err
 		}
 
-		releasesig, err = http.DownloadTemp(gocontext.TODO(), d, repo.ReleaseURL("Release.gpg").String())
+		releasesig, err = http.DownloadTemp(ctx, d, repo.ReleaseURL("Release.gpg").String())
 		if err != nil {
 			return err
 		}
@@ -544,7 +544,7 @@ ok:
 }
 
 // DownloadPackageIndexes downloads & parses package index files
-func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.Downloader, verifier pgp.Verifier, _ *CollectionFactory, ignoreSignatures bool, ignoreChecksums bool) error {
+func (repo *RemoteRepo) DownloadPackageIndexes(ctx context.Context, progress aptly.Progress, d aptly.Downloader, verifier pgp.Verifier, _ *CollectionFactory, ignoreSignatures bool, ignoreChecksums bool) error {
 	if repo.packageList != nil {
 		panic("packageList != nil")
 	}
@@ -577,7 +577,7 @@ func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.
 
 	for _, info := range packagesPaths {
 		path, kind, component, architecture := info[0], info[1], info[2], info[3]
-		packagesReader, packagesFile, err := http.DownloadTryCompression(gocontext.TODO(), d, repo.IndexesRootURL(), path, repo.ReleaseFiles, ignoreChecksums)
+		packagesReader, packagesFile, err := http.DownloadTryCompression(ctx, d, repo.IndexesRootURL(), path, repo.ReleaseFiles, ignoreChecksums)
 
 		isInstaller := kind == PackageTypeInstaller
 		if err != nil {
@@ -590,7 +590,7 @@ func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.
 
 				// some repos do not have installer hashsum file listed in release file but provide a separate gpg file
 				hashsumPath := repo.IndexesRootURL().ResolveReference(&url.URL{Path: path}).String()
-				packagesFile, err = http.DownloadTemp(gocontext.TODO(), d, hashsumPath)
+				packagesFile, err = http.DownloadTemp(ctx, d, hashsumPath)
 				if err != nil {
 					if herr, ok := err.(*http.Error); ok && (herr.Code == 404 || herr.Code == 403) {
 						// installer files are not available in all components and architectures
@@ -604,7 +604,7 @@ func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.
 				if verifier != nil && !ignoreSignatures {
 					hashsumGpgPath := repo.IndexesRootURL().ResolveReference(&url.URL{Path: path + ".gpg"}).String()
 					var filesig *os.File
-					filesig, err = http.DownloadTemp(gocontext.TODO(), d, hashsumGpgPath)
+					filesig, err = http.DownloadTemp(ctx, d, hashsumGpgPath)
 					if err != nil {
 						return err
 					}
@@ -661,7 +661,7 @@ func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.
 					return err
 				}
 			} else if kind == PackageTypeInstaller {
-				p, err = NewInstallerPackageFromControlFile(stanza, repo, component, architecture, d)
+				p, err = NewInstallerPackageFromControlFile(ctx, stanza, repo, component, architecture, d)
 				if err != nil {
 					return err
 				}

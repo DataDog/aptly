@@ -1,13 +1,15 @@
 package cmd
 
 import (
+	gocontext "context"
 	"fmt"
 	"strings"
 
-	"github.com/aptly-dev/aptly/deb"
-	"github.com/aptly-dev/aptly/query"
 	"github.com/smira/commander"
 	"github.com/smira/flag"
+
+	"github.com/aptly-dev/aptly/deb"
+	"github.com/aptly-dev/aptly/query"
 )
 
 func aptlyMirrorCreate(cmd *commander.Command, args []string) error {
@@ -64,7 +66,7 @@ func aptlyMirrorCreate(cmd *commander.Command, args []string) error {
 		return fmt.Errorf("unable to initialize GPG verifier: %s", err)
 	}
 
-	err = repo.Fetch(context.Downloader(), verifier, ignoreSignatures)
+	err = repo.Fetch(gocontext.Background(), context.Downloader(), verifier, ignoreSignatures)
 	if err != nil {
 		return fmt.Errorf("unable to fetch mirror: %s", err)
 	}

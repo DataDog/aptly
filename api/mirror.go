@@ -1,6 +1,7 @@
 package api
 
 import (
+	gocontext "context"
 	"fmt"
 	"net/http"
 	"os"
@@ -8,13 +9,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+
 	"github.com/aptly-dev/aptly/aptly"
 	"github.com/aptly-dev/aptly/deb"
 	"github.com/aptly-dev/aptly/pgp"
 	"github.com/aptly-dev/aptly/query"
 	"github.com/aptly-dev/aptly/task"
-	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 )
 
 func getVerifier(keyRings []string) (pgp.Verifier, error) {
@@ -185,7 +187,7 @@ func apiMirrorsCreate(c *gin.Context) {
 	}
 
 	downloader := context.NewDownloader(nil)
-	err = repo.Fetch(downloader, verifier, b.IgnoreSignatures)
+	err = repo.Fetch(c.Request.Context(), downloader, verifier, b.IgnoreSignatures)
 	if err != nil {
 		AbortWithJSONError(c, 400, fmt.Errorf("unable to fetch mirror: %s", err))
 		return
@@ -478,7 +480,7 @@ func apiMirrorsEdit(c *gin.Context) {
 			return
 		}
 
-		err = repo.Fetch(context.Downloader(), verifier, ignoreSignatures)
+		err = repo.Fetch(c.Request.Context(), context.Downloader(), verifier, ignoreSignatures)
 		if err != nil {
 			AbortWithJSONError(c, 500, fmt.Errorf("unable to edit: %s", err))
 			return
@@ -566,9 +568,9 @@ func apiMirrorsUpdate(c *gin.Context) {
 
 	resources := []string{string(remote.Key())}
 	maybeRunTaskInBackground(c, "Update mirror "+b.Name, resources, func(out aptly.Progress, detail *task.Detail) (*task.ProcessReturnValue, error) {
-
+		ctx := gocontext.Background()
 		downloader := context.NewDownloader(out)
-		err := remote.Fetch(downloader, verifier, b.IgnoreSignatures)
+		err := remote.Fetch(ctx, downloader, verifier, b.IgnoreSignatures)
 		if err != nil {
 			return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("unable to update: %s", err)
 		}
@@ -580,13 +582,13 @@ func apiMirrorsUpdate(c *gin.Context) {
 			}
 		}
 
-		err = remote.DownloadPackageIndexes(out, downloader, verifier, collectionFactory, b.IgnoreSignatures, remote.SkipComponentCheck)
+		err = remote.DownloadPackageIndexes(ctx, out, downloader, verifier, collectionFactory, b.IgnoreSignatures, remote.SkipComponentCheck)
 		if err != nil {
 			return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("unable to update: %s", err)
 		}
 
 		if remote.DownloadAppStream && !remote.IsFlat() {
-			err = remote.DownloadAppStreamFiles(out, downloader,
+			err = remote.DownloadAppStreamFiles(ctx, out, downloader,
 				context.PackagePool(), collectionFactory.ChecksumCollection(nil), b.IgnoreChecksums)
 			if err != nil {
 				return &task.ProcessReturnValue{Code: http.StatusInternalServerError, Value: nil}, fmt.Errorf("unable to update: %s", err)
