@@ -138,13 +138,12 @@ jobs:
           # ~/go/bin/gocovmerge coverage/*.out > coverage.txt
           awk 'FNR==1 && NR!=1 {next} {print}' coverage/*.out > coverage.txt
 
-      - name: "Upload Code Coverage"
+      - name: Upload coverage to Datadog
         if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.txt
-          fail_ci_if_error: true
+        continue-on-error: true
+        env:
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+        run: npx --yes @datadog/datadog-ci coverage upload coverage.txt
 
 
   ci-debian-build:
