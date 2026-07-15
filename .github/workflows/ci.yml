@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           # fetch the whole repo for `git describe` to work
           fetch-depth: 0
@@ -36,7 +36,7 @@ jobs:
           make docker-unit-tests
           mkdir -p out/coverage
           mv unit.out out/coverage/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unit-tests-coverage
           path: out/
@@ -60,7 +60,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends graphviz gnupg2 gpgv2 git gcc make devscripts python3 python3-requests-unixsocket python3-termcolor python3-swiftclient python3-boto python3-azure-storage python3-etcd3 python3-plyvel flake8 faketime
 
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           # fetch the whole repo for `git describe` to work
           fetch-depth: 0
@@ -77,13 +77,13 @@ jobs:
         id: goversion
 
       - name: "Setup Go"
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@be3c94b385c4f180051c996d336f57a34c397495 # v3.6.1
         with:
           go-version: ${{ steps.goversion.outputs.GOVER }}
 
       - name: "Install Azurite"
         id: azuright
-        uses: potatoqualitee/azuright@v1.1
+        uses: potatoqualitee/azuright@e56d2754eb15218d507961493bc83ca037216887 # v1.1
         with:
           directory: ${{ runner.temp }}
 
@@ -105,7 +105,7 @@ jobs:
           mkdir -p out/coverage
           COVERAGE_DIR=$PWD/out/coverage make system-test
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: system-tests-coverage
           path: out/
@@ -120,15 +120,15 @@ jobs:
       - test
     steps:
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: "Download Unit Test Coverage"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: unit-tests-coverage
 
       - name: "Download System Test Coverage"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: system-tests-coverage
 
@@ -140,7 +140,7 @@ jobs:
 
       - name: "Upload Code Coverage"
         if: github.actor != 'dependabot[bot]'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5.5.4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.txt
@@ -193,7 +193,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           # fetch the whole repo for `git describe` to work
           fetch-depth: 0
@@ -206,7 +206,7 @@ jobs:
         id: goversion
 
       - name: "Setup Go"
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@be3c94b385c4f180051c996d336f57a34c397495 # v3.6.1
         with:
           go-version: ${{ steps.goversion.outputs.GOVER }}
 
@@ -262,7 +262,7 @@ jobs:
 
       - name: "Upload CI Artifacts"
         if: github.ref != 'refs/heads/master' && !startsWith(github.event.ref, 'refs/tags')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: aptly_${{ steps.releaseversion.outputs.VERSION }}_${{ matrix.suite }}_${{ matrix.arch }}
           path: build/
@@ -284,7 +284,7 @@ jobs:
             goarch: arm
     steps:
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           # fetch the whole repo for `git describe` to work
           fetch-depth: 0
@@ -295,7 +295,7 @@ jobs:
         id: goversion
 
       - name: "Setup Go"
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@be3c94b385c4f180051c996d336f57a34c397495 # v3.6.1
         with:
           go-version: ${{ steps.goversion.outputs.GOVER }}
 
@@ -322,7 +322,7 @@ jobs:
           make binaries GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }}
 
       - name: "Upload Artifacts"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: startsWith(github.event.ref, 'refs/tags')
         with:
           name: aptly_${{ steps.releaseversion.outputs.VERSION }}_${{ matrix.goos }}_${{ matrix.goarch }}
@@ -330,7 +330,7 @@ jobs:
           compression-level: 0 # no compression
 
       - name: "Upload CI Artifacts"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: "!startsWith(github.event.ref, 'refs/tags')"
         with:
           name: aptly_${{ steps.releaseversion.outputs.VERSION }}_${{ matrix.goos }}_${{ matrix.goarch }}
@@ -346,7 +346,7 @@ jobs:
     if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: "Get aptly version"
         env:
@@ -358,7 +358,7 @@ jobs:
         id: releaseversion
 
       - name: "Download Artifacts"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: out/
 
@@ -368,7 +368,7 @@ jobs:
           dpkg-parsechangelog -S Changes | tail -n +4 >> out/release-notes.md
 
       - name: "Release"
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           name: "Aptly Release ${{ steps.releaseversion.outputs.VERSION }}"
           files: "out/**/aptly_*.zip"
