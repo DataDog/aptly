@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/aptly-dev/aptly/deb"
+	debgraph "github.com/aptly-dev/aptly/deb/graph"
 	"github.com/aptly-dev/aptly/utils"
 	"github.com/smira/commander"
 )
@@ -27,7 +27,7 @@ func aptlyGraph(cmd *commander.Command, args []string) error {
 
 	fmt.Printf("Generating graph...\n")
 	collectionFactory := context.NewCollectionFactory()
-	graph, err := deb.BuildGraph(collectionFactory, layout)
+	graph, err := debgraph.BuildGraph(collectionFactory, layout)
 	if err != nil {
 		return err
 	}

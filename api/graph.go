@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/aptly-dev/aptly/deb"
+	debgraph "github.com/aptly-dev/aptly/deb/graph"
 	"github.com/gin-gonic/gin"
 )
 
@@ -43,7 +43,7 @@ func apiGraph(c *gin.Context) {
 	layout := c.Request.URL.Query().Get("layout")
 	factory := context.NewCollectionFactory()
 
-	graph, err := deb.BuildGraph(factory, layout)
+	graph, err := debgraph.BuildGraph(factory, layout)
 	if err != nil {
 		c.JSON(500, err)
 		return

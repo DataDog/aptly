@@ -1,14 +1,18 @@
-package deb
+// Package graph renders the aptly object database as a graphviz graph.
+//
+// It is kept out of package deb so that importing deb does not pull in gographviz.
+package graph
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/aptly-dev/aptly/deb"
 	"github.com/awalterschulze/gographviz"
 )
 
 // BuildGraph generates graph contents from aptly object database
-func BuildGraph(collectionFactory *CollectionFactory, layout string) (gographviz.Interface, error) {
+func BuildGraph(collectionFactory *deb.CollectionFactory, layout string) (gographviz.Interface, error) {
 	var err error
 
 	graph := gographviz.NewEscape()
@@ -32,7 +36,7 @@ func BuildGraph(collectionFactory *CollectionFactory, layout string) (gographviz
 
 	existingNodes := map[string]bool{}
 
-	err = collectionFactory.RemoteRepoCollection().ForEach(func(repo *RemoteRepo) error {
+	err = collectionFactory.RemoteRepoCollection().ForEach(func(repo *deb.RemoteRepo) error {
 		e := collectionFactory.RemoteRepoCollection().LoadComplete(repo)
 		if e != nil {
 			return e
@@ -54,7 +58,7 @@ func BuildGraph(collectionFactory *CollectionFactory, layout string) (gographviz
 		return nil, err
 	}
 
-	err = collectionFactory.LocalRepoCollection().ForEach(func(repo *LocalRepo) error {
+	err = collectionFactory.LocalRepoCollection().ForEach(func(repo *deb.LocalRepo) error {
 		e := collectionFactory.LocalRepoCollection().LoadComplete(repo)
 		if e != nil {
 			return e
@@ -75,19 +79,19 @@ func BuildGraph(collectionFactory *CollectionFactory, layout string) (gographviz
 		return nil, err
 	}
 
-	_ = collectionFactory.SnapshotCollection().ForEach(func(snapshot *Snapshot) error {
+	_ = collectionFactory.SnapshotCollection().ForEach(func(snapshot *deb.Snapshot) error {
 		existingNodes[snapshot.UUID] = true
 		return nil
 	})
 
-	err = collectionFactory.SnapshotCollection().ForEach(func(snapshot *Snapshot) error {
+	err = collectionFactory.SnapshotCollection().ForEach(func(snapshot *deb.Snapshot) error {
 		e := collectionFactory.SnapshotCollection().LoadComplete(snapshot)
 		if e != nil {
 			return e
 		}
 
 		description := snapshot.Description
-		if snapshot.SourceKind == SourceRemoteRepo {
+		if snapshot.SourceKind == deb.SourceRemoteRepo {
 			description = "Snapshot from repo"
 		}
 
@@ -99,7 +103,7 @@ func BuildGraph(collectionFactory *CollectionFactory, layout string) (gographviz
 				snapshot.Name, description, snapshot.NumPackages(), labelEnd),
 		})
 
-		if snapshot.SourceKind == SourceRemoteRepo || snapshot.SourceKind == SourceLocalRepo || snapshot.SourceKind == SourceSnapshot {
+		if snapshot.SourceKind == deb.SourceRemoteRepo || snapshot.SourceKind == deb.SourceLocalRepo || snapshot.SourceKind == deb.SourceSnapshot {
 			for _, uuid := range snapshot.SourceIDs {
 				_, exists := existingNodes[uuid]
 				if exists {
@@ -114,7 +118,7 @@ func BuildGraph(collectionFactory *CollectionFactory, layout string) (gographviz
 		return nil, err
 	}
 
-	_ = collectionFactory.PublishedRepoCollection().ForEach(func(repo *PublishedRepo) error {
+	_ = collectionFactory.PublishedRepoCollection().ForEach(func(repo *deb.PublishedRepo) error {
 		_ = graph.AddNode("aptly", repo.UUID, map[string]string{
 			"shape":     "Mrecord",
 			"style":     "filled",
